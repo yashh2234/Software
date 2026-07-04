@@ -13,9 +13,10 @@ interface DataTableProps {
   pageSize?: number
   exportable?: boolean
   filename?: string
+  onRowClick?: (row: Record<string, ReactNode>) => void
 }
 
-export function DataTable({ columns, rows, pageSize = 20, exportable = true, filename = 'export' }: DataTableProps) {
+export function DataTable({ columns, rows, pageSize = 20, exportable = true, filename = 'export', onRowClick }: DataTableProps) {
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
   const [page, setPage] = useState(1)
@@ -131,9 +132,9 @@ export function DataTable({ columns, rows, pageSize = 20, exportable = true, fil
               </tr>
             ) : (
               pageRows.map((row, index) => (
-                <tr key={index}>
+                <tr key={index} onClick={() => onRowClick?.(row)} style={{ cursor: onRowClick ? 'pointer' : undefined }}>
                   {columns.map((col) => (
-                    <td key={col.key}>{row[col.key] ?? ''}</td>
+                    <td key={col.key}>{col.key.startsWith('_') ? null : row[col.key] ?? ''}</td>
                   ))}
                 </tr>
               ))

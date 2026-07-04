@@ -17,6 +17,10 @@ import { DueReportsPage } from './pages/DueReportsPage'
 import { FinalReportsPage } from './pages/FinalReportsPage'
 import { UlrLinkPage } from './pages/UlrLinkPage'
 import { StoresPage } from './pages/StoresPage'
+import { WorkflowTemplatesPage } from './pages/WorkflowTemplatesPage'
+import { JobsPage } from './pages/JobsPage'
+import { PermissionsPage } from './pages/PermissionsPage'
+import { DocumentLibraryPage } from './pages/DocumentLibraryPage'
 import { AppShell } from './components/AppShell'
 import { useState } from 'react'
 import type { ModuleKey } from './lib/types'
@@ -29,6 +33,7 @@ function AuthenticatedApp() {
     { key: 'lab', label: 'Lab' },
     { key: 'users', label: 'Users' },
     { key: 'roles', label: 'Roles' },
+    { key: 'permissions', label: 'Permissions' },
     { key: 'registrations', label: 'Registration' },
     { key: 'billing', label: 'Billing' },
     { key: 'invoices', label: 'Invoices' },
@@ -39,6 +44,9 @@ function AuthenticatedApp() {
     { key: 'final_reports', label: 'Final Reports' },
     { key: 'ulr_links', label: 'ULR Links' },
     { key: 'stores', label: 'Stores' },
+    { key: 'workflow_templates', label: 'Workflows' },
+    { key: 'jobs', label: 'Jobs' },
+    { key: 'documents', label: 'Documents' },
     { key: 'audit', label: 'Audit Log' },
     { key: 'user_tracking', label: 'User Tracking' },
     { key: 'settings', label: 'Settings' },
@@ -92,11 +100,23 @@ function AuthenticatedApp() {
       <div className={`view ${activeModule === 'audit' ? 'visible' : ''}`}>
         {activeModule === 'audit' && <AuditLogPage />}
       </div>
+      <div className={`view ${activeModule === 'permissions' ? 'visible' : ''}`}>
+        {activeModule === 'permissions' && <PermissionsPage />}
+      </div>
+      <div className={`view ${activeModule === 'workflow_templates' ? 'visible' : ''}`}>
+        {activeModule === 'workflow_templates' && <WorkflowTemplatesPage />}
+      </div>
+      <div className={`view ${activeModule === 'jobs' ? 'visible' : ''}`}>
+        {activeModule === 'jobs' && <JobsPage />}
+      </div>
       <div className={`view ${activeModule === 'user_tracking' ? 'visible' : ''}`}>
         {activeModule === 'user_tracking' && <UserTrackingPage />}
       </div>
       <div className={`view ${activeModule === 'invoices' ? 'visible' : ''}`}>
         {activeModule === 'invoices' && <InvoicePage />}
+      </div>
+      <div className={`view ${activeModule === 'documents' ? 'visible' : ''}`}>
+        {activeModule === 'documents' && <DocumentLibraryPage />}
       </div>
       <div className={`view ${activeModule === 'settings' ? 'visible' : ''}`}>
         {activeModule === 'settings' && <SettingsPage />}

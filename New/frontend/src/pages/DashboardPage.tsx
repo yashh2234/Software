@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ClipboardList, FlaskConical, IndianRupee, ReceiptText, ShieldCheck, Check, UserCheck, FileText, Play, Users } from 'lucide-react'
+import { ClipboardList, FlaskConical, IndianRupee, ReceiptText, ShieldCheck, Check, UserCheck, FileText, Play, Users, Clock, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { MetricCard } from '../components/MetricCard'
 import { RegistrationTrendChart, MonthlyRevenueChart, ReportStatusChart } from '../components/Charts'
@@ -43,6 +43,7 @@ export function DashboardPage() {
   const [trends, setTrends] = useState<TrendsData | null>(null)
   const [trendsLoading, setTrendsLoading] = useState(true)
   const [assignedCount, setAssignedCount] = useState(0)
+  const [slaSummary, setSlaSummary] = useState<{ total_active: number; overdue_count: number; on_track: number } | null>(null)
   const [trackingSummary, setTrackingSummary] = useState<{
     online_count: number
     today_active_users: number
@@ -83,11 +84,21 @@ export function DashboardPage() {
     } catch {}
   }, [])
 
+  const loadSla = useCallback(async () => {
+    try {
+      const data = await request<{ total_active: number; overdue_count: number; on_track: number }>('/jobs/sla-summary')
+      setSlaSummary(data)
+    } catch {}
+  }, [])
+
   useEffect(() => {
     void loadTrends()
     void loadAssigned()
-    if (role === 'admin') void loadTracking()
-  }, [loadTrends, loadAssigned, loadTracking, role])
+    if (role === 'admin') {
+      void loadTracking()
+      void loadSla()
+    }
+  }, [loadTrends, loadAssigned, loadTracking, loadSla, role])
 
   const adminMetrics = role === 'admin' ? [
     {
@@ -102,6 +113,12 @@ export function DashboardPage() {
       detail: `${roles.reduce((s, r) => s + r.users_count, 0)} total users`,
       icon: UserCheck,
     },
+    ...(slaSummary ? [{
+      label: 'SLA Breaches',
+      value: slaSummary.overdue_count,
+      detail: `${slaSummary.on_track} of ${slaSummary.total_active} on track`,
+      icon: AlertTriangle,
+    }] : []),
   ] : []
 
   const receptionMetrics = isReceptionOrAbove ? [
@@ -250,6 +267,23 @@ export function DashboardPage() {
           )}
         </div>
       </section>
+
+      {role === 'admin' && slaSummary ? (
+        <section className="surface" style={{ marginTop: '1.25rem' }}>
+          <div className="surface-heading">
+            <div>
+              <p className="section-label">SLA Monitoring</p>
+              <h2>Job status overview</h2>
+            </div>
+            <Clock size={20} />
+          </div>
+          <div className="summary-list">
+            <span style={{ color: '#10b981' }}>{slaSummary.on_track} jobs on track</span>
+            {slaSummary.overdue_count > 0 ? <span style={{ color: '#ef4444' }}><AlertTriangle size={14} /> {slaSummary.overdue_count} overdue</span> : <span>No overdue jobs</span>}
+            <span>{slaSummary.total_active} active total</span>
+          </div>
+        </section>
+      ) : null}
 
       {role === 'admin' && trackingSummary ? (
         <section className="surface" style={{ marginTop: '1.25rem' }}>

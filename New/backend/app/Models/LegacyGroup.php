@@ -34,4 +34,9 @@ class LegacyGroup extends Model
 
         return is_array($decoded) ? array_values(array_filter($decoded, 'is_string')) : [];
     }
+
+    public function newPermissions(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(Permission::class, 'model', 'role_has_permissions', 'role_id', 'permission_id');
+    }
 }

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\LegacyGroup;
+use App\Models\Permission;
+use App\Services\PermissionRegistrar;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -42,12 +44,16 @@ class RoleController extends Controller
             'permissions.*' => ['string'],
         ]);
 
-        $permission = $this->serializePermissions($validated['permissions'] ?? []);
+        $permNames = $validated['permissions'] ?? [];
+        $permission = $this->serializePermissions($permNames);
 
         $group = LegacyGroup::query()->create([
             'group_name' => $validated['group_name'],
             'permission' => $permission,
         ]);
+
+        // Sync new RBAC pivot
+        $this->syncNewPermissions($group, $permNames);
 
         return response()->json([
             'message' => 'Role created successfully',
@@ -65,12 +71,16 @@ class RoleController extends Controller
             'permissions.*' => ['string'],
         ]);
 
-        $permission = $this->serializePermissions($validated['permissions'] ?? $role->permissions());
+        $permNames = $validated['permissions'] ?? $role->permissions();
+        $permission = $this->serializePermissions($permNames);
 
         $role->update([
             'group_name' => $validated['group_name'],
             'permission' => $permission,
         ]);
+
+        // Sync new RBAC pivot
+        $this->syncNewPermissions($role, $permNames);
 
         return response()->json([
             'message' => 'Role updated successfully',
@@ -116,5 +126,11 @@ class RoleController extends Controller
     {
         $user = $request->user();
         abort_unless($user && ($user->isLegacyAdmin() || in_array($permission, $user->legacyPermissions(), true)), 403, 'Unauthorized');
+    }
+
+    private function syncNewPermissions(LegacyGroup $role, array $permNames): void
+    {
+        $permIds = Permission::whereIn('name', $permNames)->pluck('id');
+        $role->newPermissions()->sync($permIds);
     }
 }

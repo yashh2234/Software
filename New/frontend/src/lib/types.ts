@@ -270,4 +270,101 @@ export interface PurchaseOrderListItem {
   set_count: number
 }
 
-export type ModuleKey = 'dashboard' | 'lab' | 'users' | 'roles' | 'registrations' | 'billing' | 'reports' | 'expenses' | 'purchase_orders' | 'invoices' | 'due_reports' | 'final_reports' | 'ulr_links' | 'stores' | 'settings' | 'audit' | 'user_tracking'
+export type ModuleKey = 'dashboard' | 'lab' | 'users' | 'roles' | 'permissions' | 'registrations' | 'billing' | 'reports' | 'expenses' | 'purchase_orders' | 'invoices' | 'due_reports' | 'final_reports' | 'ulr_links' | 'stores' | 'settings' | 'audit' | 'user_tracking' | 'workflow_templates' | 'jobs' | 'documents'
+
+export interface WorkflowTemplate {
+  id: number
+  name: string
+  description: string | null
+  is_active: boolean
+  created_by: number | null
+  created_at: string | null
+  updated_at: string | null
+  stages?: WorkflowStage[]
+  transitions?: WorkflowTransition[]
+}
+
+export interface WorkflowStage {
+  id: number
+  template_id: number
+  name: string
+  slug: string
+  sort_order: number
+  assigned_role_id: number | null
+  sla_hours: number | null
+  is_start: boolean
+  is_end: boolean
+  color: string
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface WorkflowTransition {
+  id: number
+  template_id: number
+  from_stage_id: number
+  to_stage_id: number
+  name: string
+  permission_name: string | null
+  requires_approval: boolean
+  created_at: string | null
+  updated_at: string | null
+  from_stage?: WorkflowStage
+  to_stage?: WorkflowStage
+}
+
+export interface Job {
+  id: number
+  workflow_template_id: number | null
+  current_stage_id: number | null
+  uid_no: string
+  title: string | null
+  description: string | null
+  priority: string
+  status: string
+  client_id: number | null
+  assigned_to: number | null
+  created_by: number | null
+  updated_by: number | null
+  started_at: string | null
+  completed_at: string | null
+  due_at: string | null
+  created_at: string | null
+  updated_at: string | null
+  deleted_at: string | null
+  current_stage?: WorkflowStage | null
+  workflow_template?: WorkflowTemplate | null
+  assigned_user?: { id: number; name: string } | null
+  active_stage_tracking?: JobStageTracking | null
+  timeline?: JobTimelineEntry[]
+  stage_tracking?: JobStageTracking[]
+}
+
+export interface JobTimelineEntry {
+  id: number
+  job_id: number
+  from_stage_id: number | null
+  to_stage_id: number | null
+  action: string
+  user_id: number | null
+  notes: string | null
+  metadata: Record<string, unknown> | null
+  created_at: string | null
+  user?: { id: number; name: string } | null
+  from_stage?: WorkflowStage | null
+  to_stage?: WorkflowStage | null
+}
+
+export interface JobStageTracking {
+  id: number
+  job_id: number
+  stage_id: number
+  entered_at: string | null
+  exited_at: string | null
+  sla_deadline: string | null
+  is_overdue: boolean
+  overdue_minutes: number
+  created_at: string | null
+  updated_at: string | null
+  stage?: WorkflowStage | null
+}

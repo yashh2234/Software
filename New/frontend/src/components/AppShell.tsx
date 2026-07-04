@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Bell, FlaskConical, RefreshCcw, LogOut, LayoutDashboard, Users, ClipboardList, ReceiptText, BarChart3, ShieldCheck, IndianRupee, FileText, Settings, History, Search, Check, Receipt, AlertTriangle, ClipboardCheck } from 'lucide-react'
+import { Bell, FlaskConical, RefreshCcw, LogOut, LayoutDashboard, Users, ClipboardList, ReceiptText, BarChart3, ShieldCheck, IndianRupee, FileText, Settings, History, Search, Check, Receipt, AlertTriangle, ClipboardCheck, Briefcase } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
@@ -20,6 +20,10 @@ const iconMap: Record<string, LucideIcon> = {
   final_reports: ClipboardCheck,
   ulr_links: FileText,
   stores: LayoutDashboard,
+  workflow_templates: Settings,
+  jobs: Briefcase,
+  permissions: ShieldCheck,
+  documents: FileText,
   audit: History,
   user_tracking: Users,
   settings: Settings,
@@ -150,7 +154,7 @@ export function AppShell({ modules, activeModule, onModuleChange, children }: Ap
         <header className="topbar">
           <div>
             <p className="section-label">Laboratory Management System</p>
-            <h1>Dashboard</h1>
+            <h1>{modules.find((m) => m.key === activeModule)?.label ?? 'Dashboard'}</h1>
           </div>
           <div className="topbar-actions">
             <div ref={searchRef} style={{ position: 'relative' }}>

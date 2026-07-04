@@ -19,6 +19,13 @@ use App\Http\Controllers\Api\DueReportsController;
 use App\Http\Controllers\Api\FinalReportsController;
 use App\Http\Controllers\Api\UlrLinkController;
 use App\Http\Controllers\Api\StoreController;
+use App\Http\Controllers\Api\WorkflowTemplateController;
+use App\Http\Controllers\Api\WorkflowStageController;
+use App\Http\Controllers\Api\WorkflowTransitionController;
+use App\Http\Controllers\Api\JobController;
+use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\DocumentCategoryController;
+use App\Http\Controllers\Api\DocumentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -115,4 +122,65 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('reports/{type}/export', [ReportController::class, 'export']);
 
     Route::get('dashboard/cash-summary', [DashboardController::class, 'cashSummary']);
+
+    Route::prefix('workflow')->group(function (): void {
+        Route::post('seed', [WorkflowTemplateController::class, 'seed']);
+        Route::apiResource('templates', WorkflowTemplateController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+
+        Route::get('templates/{workflowTemplate}/stages', [WorkflowStageController::class, 'index']);
+        Route::post('templates/{workflowTemplate}/stages', [WorkflowStageController::class, 'store']);
+        Route::get('stages/{workflowStage}', [WorkflowStageController::class, 'show']);
+        Route::put('stages/{workflowStage}', [WorkflowStageController::class, 'update']);
+        Route::delete('stages/{workflowStage}', [WorkflowStageController::class, 'destroy']);
+
+        Route::get('templates/{workflowTemplate}/transitions', [WorkflowTransitionController::class, 'index']);
+        Route::post('templates/{workflowTemplate}/transitions', [WorkflowTransitionController::class, 'store']);
+        Route::get('transitions/{workflowTransition}', [WorkflowTransitionController::class, 'show']);
+        Route::put('transitions/{workflowTransition}', [WorkflowTransitionController::class, 'update']);
+        Route::delete('transitions/{workflowTransition}', [WorkflowTransitionController::class, 'destroy']);
+    });
+
+    Route::prefix('jobs')->group(function (): void {
+        Route::get('/', [JobController::class, 'index']);
+        Route::post('/', [JobController::class, 'store']);
+        Route::get('sla-summary', [JobController::class, 'slaSummary']);
+        Route::post('link-registration', [JobController::class, 'linkRegistration']);
+        Route::get('{job}', [JobController::class, 'show']);
+        Route::put('{job}', [JobController::class, 'update']);
+        Route::delete('{job}', [JobController::class, 'destroy']);
+        Route::post('{job}/transition', [JobController::class, 'transition']);
+        Route::get('{job}/allowed-transitions', [JobController::class, 'allowedTransitions']);
+        Route::post('{job}/return-to-stage', [JobController::class, 'returnToStage']);
+        Route::post('{job}/assign', [JobController::class, 'assign']);
+        Route::post('{job}/cancel', [JobController::class, 'cancel']);
+        Route::get('{job}/timeline', [JobController::class, 'timeline']);
+    });
+
+    Route::prefix('permissions')->group(function (): void {
+        Route::get('/', [PermissionController::class, 'index']);
+        Route::post('seed', [PermissionController::class, 'seed']);
+        Route::get('roles/{role}', [PermissionController::class, 'rolePermissions']);
+        Route::post('roles/{role}/sync', [PermissionController::class, 'syncRolePermissions']);
+        Route::post('users/assign', [PermissionController::class, 'assignToUser']);
+        Route::get('users/{userId}', [PermissionController::class, 'userPermissions']);
+    });
+
+    Route::prefix('documents')->group(function (): void {
+        Route::get('/', [DocumentController::class, 'index']);
+        Route::post('/', [DocumentController::class, 'store']);
+        Route::get('search', [DocumentController::class, 'search']);
+        Route::get('categories/tree', [DocumentCategoryController::class, 'tree']);
+        Route::get('categories', [DocumentCategoryController::class, 'index']);
+        Route::post('categories', [DocumentCategoryController::class, 'store']);
+        Route::get('categories/{documentCategory}', [DocumentCategoryController::class, 'show']);
+        Route::put('categories/{documentCategory}', [DocumentCategoryController::class, 'update']);
+        Route::delete('categories/{documentCategory}', [DocumentCategoryController::class, 'destroy']);
+        Route::get('{document}', [DocumentController::class, 'show']);
+        Route::put('{document}', [DocumentController::class, 'update']);
+        Route::delete('{document}', [DocumentController::class, 'destroy']);
+        Route::post('{document}/versions', [DocumentController::class, 'uploadVersion']);
+        Route::get('{document}/download/{versionId?}', [DocumentController::class, 'download']);
+        Route::get('{document}/preview', [DocumentController::class, 'preview']);
+        Route::get('{document}/downloads', [DocumentController::class, 'downloadHistory']);
+    });
 });
