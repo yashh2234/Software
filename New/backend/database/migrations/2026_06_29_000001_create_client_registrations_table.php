@@ -6,40 +6,35 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * This migration is intentionally a no-op.
+     *
+     * It originally created a `client_registrations` (plural) table, but no
+     * model or controller in this codebase ever queries that name — the
+     * live registration data lives in `client_registration` (singular),
+     * used by App\Models\Registration and every controller that touches
+     * registrations, billing, or reports.
+     *
+     * `client_registrations` (plural) is provided separately as a MySQL
+     * VIEW over `client_registration`, created by
+     * App\Providers\AppServiceProvider::ensureLegacyClientRegistrationsView()
+     * for any legacy code that still expects the plural name.
+     *
+     * Since Laravel stopped treating views as tables for Schema::hasTable()
+     * purposes, this migration's old guard could no longer detect that view
+     * and would attempt to CREATE TABLE `client_registrations`, colliding
+     * with the view and failing with a 1050 "table already exists" error.
+     * Rather than compete with the view for the name, this migration does
+     * nothing — the view (or a fresh boot of AppServiceProvider) is the
+     * single source of truth for the plural name.
+     */
     public function up(): void
     {
-        if (Schema::hasTable('client_registrations')) {
-            return;
-        }
-
-        Schema::create('client_registrations', function (Blueprint $table): void {
-            $table->id();
-            $table->string('uid_no')->unique();
-            $table->date('received_date')->index();
-            $table->string('agency_name');
-            $table->string('reporting_address');
-            $table->string('mobile_no', 50);
-            $table->text('name_of_work');
-            $table->text('sample_details');
-            $table->decimal('total_payment', 12, 2)->default(0);
-            $table->decimal('advance_payment', 12, 2)->default(0);
-            $table->decimal('balance_dues', 12, 2)->default(0);
-            $table->string('payment_followup')->nullable();
-            $table->text('remark')->nullable();
-            $table->string('qty')->nullable();
-            $table->string('scan_copy')->nullable();
-            $table->string('scan_copy_1')->nullable();
-            $table->string('scan_copy_2')->nullable();
-            $table->string('scan_copy_3')->nullable();
-            $table->string('scan_copy_4')->nullable();
-            $table->string('report_copy')->nullable();
-            $table->string('assign_to')->default('lab');
-            $table->timestamps();
-        });
+        // Intentionally empty. See class docblock above.
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('client_registrations');
+        // Nothing to reverse.
     }
 };
