@@ -16,7 +16,7 @@ class CheckPermission
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
-        if (!$user->can($permission)) {
+        if (!$user->hasPermissionTo($permission)) {
             return response()->json(['message' => 'Forbidden: you do not have permission.'], 403);
         }
 

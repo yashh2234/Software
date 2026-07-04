@@ -109,19 +109,39 @@ class User extends Authenticatable
         return app(PermissionRegistrar::class)->getPermissions($this);
     }
 
-    public function can($permission): bool
+    /**
+     * Check whether the user has a given RBAC permission.
+     *
+     * Named hasPermissionTo() rather than can() because Laravel's own
+     * Authorizable trait (used by gates/policies) already declares
+     * can(iterable|string $abilities, array|mixed $arguments = []) on
+     * every Authenticatable model. Overriding it with an incompatible
+     * signature causes a fatal "Declaration must be compatible" error
+     * on class load.
+     */
+    public function hasPermissionTo(string $permission): bool
     {
         if ($this->is_admin || $this->isLegacyAdmin()) return true;
         return app(PermissionRegistrar::class)->hasPermission($this, $permission);
     }
 
-    public function canAny(array $permissions): bool
+    /**
+     * Check whether the user has any of the given RBAC permissions.
+     *
+     * Named hasAnyPermissionTo() for the same reason as hasPermissionTo():
+     * canAny(iterable|string $abilities, array|mixed $arguments = []) is
+     * already declared by Laravel's Authorizable trait.
+     */
+    public function hasAnyPermissionTo(array $permissions): bool
     {
         if ($this->is_admin || $this->isLegacyAdmin()) return true;
         return app(PermissionRegistrar::class)->hasAnyPermission($this, $permissions);
     }
 
-    public function canAll(array $permissions): bool
+    /**
+     * Check whether the user has all of the given RBAC permissions.
+     */
+    public function hasAllPermissionsTo(array $permissions): bool
     {
         if ($this->is_admin || $this->isLegacyAdmin()) return true;
         return app(PermissionRegistrar::class)->hasAllPermissions($this, $permissions);
