@@ -163,6 +163,9 @@ class PermissionRegistrar
             ['name' => 'manage_workflows', 'module' => 'Workflows', 'action' => 'manage', 'description' => 'Manage workflow templates'],
             ['name' => 'manage_jobs', 'module' => 'Workflows', 'action' => 'jobs', 'description' => 'Manage jobs'],
 
+            // Permissions (RBAC management)
+            ['name' => 'manage_permissions', 'module' => 'Permissions', 'action' => 'manage', 'description' => 'Manage permissions and assignments'],
+
             // Settings
             ['name' => 'view_settings', 'module' => 'Settings', 'action' => 'view', 'description' => 'View settings'],
             ['name' => 'update_settings', 'module' => 'Settings', 'action' => 'update', 'description' => 'Update settings'],
