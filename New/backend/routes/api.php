@@ -26,6 +26,8 @@ use App\Http\Controllers\Api\JobController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\DocumentCategoryController;
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\AnalyticsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -182,5 +184,28 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('{document}/download/{versionId?}', [DocumentController::class, 'download']);
         Route::get('{document}/preview', [DocumentController::class, 'preview']);
         Route::get('{document}/downloads', [DocumentController::class, 'downloadHistory']);
+    });
+
+    Route::prefix('clients')->group(function (): void {
+        Route::get('/', [ClientController::class, 'index']);
+        Route::post('/', [ClientController::class, 'store']);
+        Route::get('search', [ClientController::class, 'search']);
+        Route::get('analytics', [ClientController::class, 'analytics']);
+        Route::post('migrate', [ClientController::class, 'migrateFromRegistrations']);
+        Route::get('{client}', [ClientController::class, 'show']);
+        Route::put('{client}', [ClientController::class, 'update']);
+        Route::delete('{client}', [ClientController::class, 'destroy']);
+
+        Route::post('{client}/contacts', [ClientController::class, 'storeContact']);
+        Route::put('{client}/contacts/{contact}', [ClientController::class, 'updateContact']);
+        Route::delete('{client}/contacts/{contact}', [ClientController::class, 'destroyContact']);
+
+        Route::post('{client}/communications', [ClientController::class, 'storeCommunication']);
+        Route::get('{client}/communications', [ClientController::class, 'communications']);
+    });
+
+    Route::prefix('analytics')->group(function (): void {
+        Route::get('summary', [AnalyticsController::class, 'summary']);
+        Route::get('export/{type}', [AnalyticsController::class, 'exportCsv']);
     });
 });

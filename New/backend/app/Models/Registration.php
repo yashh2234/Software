@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Registration extends Model
 {
@@ -15,7 +16,7 @@ class Registration extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'iClientId', 'sno', 'uid_no', 'ulr_no', 'month',
+        'iClientId', 'client_id', 'sno', 'uid_no', 'ulr_no', 'month',
         'received_date', 'agency_name', 'mobile_no', 'reporting_address',
         'name_of_work', 'work', 'work_order_no', 'reference', 'dist',
         'payment_followup', 'advance_payment', 'balance_dues', 'total_payment',
@@ -33,4 +34,9 @@ class Registration extends Model
     protected $casts = [
         'received_date' => 'date',
     ];
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class, 'client_id');
+    }
 }

@@ -21,6 +21,8 @@ import { WorkflowTemplatesPage } from './pages/WorkflowTemplatesPage'
 import { JobsPage } from './pages/JobsPage'
 import { PermissionsPage } from './pages/PermissionsPage'
 import { DocumentLibraryPage } from './pages/DocumentLibraryPage'
+import { ClientsPage } from './pages/ClientsPage'
+import { AnalyticsPage } from './pages/AnalyticsPage'
 import { AppShell } from './components/AppShell'
 import { useState } from 'react'
 import type { ModuleKey } from './lib/types'
@@ -34,6 +36,7 @@ function AuthenticatedApp() {
     { key: 'users', label: 'Users' },
     { key: 'roles', label: 'Roles' },
     { key: 'permissions', label: 'Permissions' },
+    { key: 'clients', label: 'Clients' },
     { key: 'registrations', label: 'Registration' },
     { key: 'billing', label: 'Billing' },
     { key: 'invoices', label: 'Invoices' },
@@ -44,6 +47,7 @@ function AuthenticatedApp() {
     { key: 'final_reports', label: 'Final Reports' },
     { key: 'ulr_links', label: 'ULR Links' },
     { key: 'stores', label: 'Stores' },
+    { key: 'analytics', label: 'Analytics' },
     { key: 'workflow_templates', label: 'Workflows' },
     { key: 'jobs', label: 'Jobs' },
     { key: 'documents', label: 'Documents' },
@@ -66,6 +70,9 @@ function AuthenticatedApp() {
       </div>
       <div className={`view ${activeModule === 'roles' ? 'visible' : ''}`}>
         {activeModule === 'roles' && <RolesPage />}
+      </div>
+      <div className={`view ${activeModule === 'clients' ? 'visible' : ''}`}>
+        {activeModule === 'clients' && <ClientsPage />}
       </div>
       <div className={`view ${activeModule === 'registrations' ? 'visible' : ''}`}>
         {activeModule === 'registrations' && <RegistrationsPage />}
@@ -102,6 +109,9 @@ function AuthenticatedApp() {
       </div>
       <div className={`view ${activeModule === 'permissions' ? 'visible' : ''}`}>
         {activeModule === 'permissions' && <PermissionsPage />}
+      </div>
+      <div className={`view ${activeModule === 'analytics' ? 'visible' : ''}`}>
+        {activeModule === 'analytics' && <AnalyticsPage />}
       </div>
       <div className={`view ${activeModule === 'workflow_templates' ? 'visible' : ''}`}>
         {activeModule === 'workflow_templates' && <WorkflowTemplatesPage />}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Bell, FlaskConical, RefreshCcw, LogOut, LayoutDashboard, Users, ClipboardList, ReceiptText, BarChart3, ShieldCheck, IndianRupee, FileText, Settings, History, Search, Check, Receipt, AlertTriangle, ClipboardCheck, Briefcase } from 'lucide-react'
+import { Bell, FlaskConical, RefreshCcw, LogOut, LayoutDashboard, Users, ClipboardList, ReceiptText, BarChart3, ShieldCheck, IndianRupee, FileText, Settings, History, Search, Check, Receipt, AlertTriangle, ClipboardCheck, Briefcase, Building2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
@@ -10,6 +10,7 @@ const iconMap: Record<string, LucideIcon> = {
   lab: FlaskConical,
   users: Users,
   roles: ShieldCheck,
+  clients: Building2,
   registrations: ClipboardList,
   billing: ReceiptText,
   reports: BarChart3,
@@ -20,6 +21,7 @@ const iconMap: Record<string, LucideIcon> = {
   final_reports: ClipboardCheck,
   ulr_links: FileText,
   stores: LayoutDashboard,
+  analytics: BarChart3,
   workflow_templates: Settings,
   jobs: Briefcase,
   permissions: ShieldCheck,
