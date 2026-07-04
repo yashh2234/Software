@@ -9,7 +9,7 @@ use App\Models\Client;
 use App\Models\Jobs;
 use App\Models\JobStageTracking;
 use App\Models\User;
-use App\Models\BillingRecord;
+use App\Models\Billing;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -42,8 +42,8 @@ class AnalyticsController extends Controller
             'active_jobs' => Jobs::where('status', 'active')->count(),
             'overdue_jobs' => JobStageTracking::whereNull('exited_at')
                 ->where('is_overdue', true)->count(),
-            'total_billing' => BillingRecord::sum('bill_amount') ?? 0,
-            'total_received' => BillingRecord::sum('amount_received') ?? 0,
+            'total_billing' => Billing::sum('bill_amount') ?? 0,
+            'total_received' => Billing::sum('amount_received') ?? 0,
             'total_invoiced' => Invoice::sum('net_amount') ?? 0,
         ];
     }

@@ -46,12 +46,18 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('/sessions/{session}', [AuthController::class, 'revokeSession']);
     Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
     Route::get('/dashboard/trends', [DashboardController::class, 'trends']);
-    Route::get('/roles', [RoleController::class, 'index']);
-    Route::post('/roles', [RoleController::class, 'store']);
-    Route::get('/roles/{role}', [RoleController::class, 'show']);
-    Route::put('/roles/{role}', [RoleController::class, 'update']);
-    Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
-    Route::apiResource('users', UserController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
+    Route::prefix('roles')->middleware('permission:view_roles')->group(function (): void {
+        Route::get('/', [RoleController::class, 'index']);
+        Route::get('{role}', [RoleController::class, 'show']);
+    });
+    Route::post('/roles', [RoleController::class, 'store'])->middleware('permission:create_roles');
+    Route::put('/roles/{role}', [RoleController::class, 'update'])->middleware('permission:update_roles');
+    Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->middleware('permission:delete_roles');
+    Route::get('/users', [UserController::class, 'index'])->middleware('permission:view_users');
+    Route::get('/users/{user}', [UserController::class, 'show'])->middleware('permission:view_users');
+    Route::post('/users', [UserController::class, 'store'])->middleware('permission:create_users');
+    Route::put('/users/{user}', [UserController::class, 'update'])->middleware('permission:update_users');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->middleware('permission:delete_users');
     Route::get('/registrations', [RegistrationController::class, 'index']);
     Route::post('/registrations', [RegistrationController::class, 'store']);
     Route::put('/registrations/{registrationId}', [RegistrationController::class, 'update']);
@@ -84,7 +90,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/lab/assigned', [ReportController::class, 'myAssigned']);
 
     Route::get('/settings/company', [SettingsController::class, 'company']);
-    Route::put('/settings/company', [SettingsController::class, 'updateCompany']);
+    Route::put('/settings/company', [SettingsController::class, 'updateCompany'])->middleware('permission:update_settings');
 
     Route::get('/expenses', [ExpenseController::class, 'index']);
     Route::post('/expenses', [ExpenseController::class, 'store']);
@@ -125,7 +131,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('dashboard/cash-summary', [DashboardController::class, 'cashSummary']);
 
-    Route::prefix('workflow')->group(function (): void {
+    Route::prefix('workflow')->middleware('permission:manage_workflows')->group(function (): void {
         Route::post('seed', [WorkflowTemplateController::class, 'seed']);
         Route::apiResource('templates', WorkflowTemplateController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
 
@@ -158,7 +164,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('{job}/timeline', [JobController::class, 'timeline']);
     });
 
-    Route::prefix('permissions')->group(function (): void {
+    Route::prefix('permissions')->middleware('permission:manage_permissions')->group(function (): void {
         Route::get('/', [PermissionController::class, 'index']);
         Route::post('seed', [PermissionController::class, 'seed']);
         Route::get('roles/{role}', [PermissionController::class, 'rolePermissions']);

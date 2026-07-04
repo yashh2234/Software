@@ -48,8 +48,8 @@ return new class extends Migration
             });
         }
 
-        if (!Schema::hasTable('jobs')) {
-            Schema::create('jobs', function (Blueprint $table): void {
+        if (!Schema::hasTable('workflow_jobs')) {
+            Schema::create('workflow_jobs', function (Blueprint $table): void {
                 $table->id();
                 $table->foreignId('workflow_template_id')->nullable()->constrained('workflow_templates')->nullOnDelete();
                 $table->foreignId('current_stage_id')->nullable()->constrained('workflow_stages')->nullOnDelete();
@@ -78,7 +78,7 @@ return new class extends Migration
         if (!Schema::hasTable('job_timeline')) {
             Schema::create('job_timeline', function (Blueprint $table): void {
                 $table->id();
-                $table->foreignId('job_id')->constrained('jobs')->cascadeOnDelete();
+                $table->foreignId('job_id')->constrained('workflow_jobs')->cascadeOnDelete();
                 $table->foreignId('from_stage_id')->nullable()->constrained('workflow_stages')->nullOnDelete();
                 $table->foreignId('to_stage_id')->nullable()->constrained('workflow_stages')->nullOnDelete();
                 $table->string('action', 255)->comment('transition name or custom action');
@@ -95,7 +95,7 @@ return new class extends Migration
         if (!Schema::hasTable('job_stage_tracking')) {
             Schema::create('job_stage_tracking', function (Blueprint $table): void {
                 $table->id();
-                $table->foreignId('job_id')->constrained('jobs')->cascadeOnDelete();
+                $table->foreignId('job_id')->constrained('workflow_jobs')->cascadeOnDelete();
                 $table->foreignId('stage_id')->constrained('workflow_stages')->cascadeOnDelete();
                 $table->timestamp('entered_at')->nullable();
                 $table->timestamp('exited_at')->nullable();
@@ -113,7 +113,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('job_stage_tracking');
         Schema::dropIfExists('job_timeline');
-        Schema::dropIfExists('jobs');
+        Schema::dropIfExists('workflow_jobs');
         Schema::dropIfExists('workflow_transitions');
         Schema::dropIfExists('workflow_stages');
         Schema::dropIfExists('workflow_templates');

@@ -11,7 +11,7 @@ class Jobs extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'jobs';
+    protected $table = 'workflow_jobs';
 
     protected $fillable = [
         'workflow_template_id',
