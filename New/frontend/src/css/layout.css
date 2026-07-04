@@ -1,0 +1,143 @@
+.login-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.65fr);
+  min-height: 100vh;
+  color: var(--color-text);
+  background: linear-gradient(180deg, rgba(237, 244, 250, 0.92), rgba(247, 249, 246, 0.96)), #f4f7f8;
+}
+
+.login-art {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 64px;
+  color: #f8fbfd;
+  background: linear-gradient(rgba(17, 36, 50, 0.72), rgba(17, 36, 50, 0.84)), url('/icons.svg'), linear-gradient(135deg, #16384d, #327268 52%, #b65f3c);
+  background-size: cover, 420px, cover;
+  background-position: center;
+}
+
+.login-art h1 {
+  max-width: 11ch;
+  margin: 48px 0 18px;
+  font-size: clamp(3.4rem, 7vw, 6.8rem);
+  line-height: 0.94;
+}
+
+.login-art p {
+  max-width: 680px;
+  margin: 0;
+  color: rgba(248, 251, 253, 0.82);
+  font-size: 1.08rem;
+  line-height: 1.75;
+}
+
+.auth-panel {
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  padding: 56px;
+  background: #ffffff;
+}
+
+.auth-panel h2 { font-size: 1.45rem; }
+
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+  color: var(--color-text);
+  background: linear-gradient(180deg, rgba(237, 244, 250, 0.92), rgba(247, 249, 246, 0.96)), #f4f7f8;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  padding: 24px 18px;
+  color: var(--color-sidebar-text);
+  background: var(--color-sidebar-bg);
+}
+
+.sidebar nav {
+  display: grid;
+  gap: 8px;
+  margin-top: 36px;
+}
+
+.sidebar nav button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0 12px;
+  color: rgba(248, 251, 253, 0.76);
+  background: transparent;
+  text-align: left;
+  min-height: 42px;
+  border: 0;
+  border-radius: var(--radius);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sidebar nav button.active,
+.sidebar nav button:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.user-block {
+  display: grid;
+  gap: 4px;
+  margin-top: 36px;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius);
+}
+
+.user-block span {
+  color: rgba(248, 251, 253, 0.68);
+  font-size: 0.86rem;
+}
+
+.workspace {
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  padding: 24px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.topbar h1 { font-size: 2rem; }
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+}
+
+.loading-screen {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  color: #f7f0e8;
+  background: var(--color-bg);
+  font-size: 1.2rem;
+  font-weight: 600;
+}

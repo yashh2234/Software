@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\DailyExpense;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class ExpenseController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $expenses = DailyExpense::query()
+            ->when($startDate && $endDate, function ($q) use ($startDate, $endDate): void {
+                $q->whereDate('date', '>=', $startDate)->whereDate('date', '<=', $endDate);
+            })
+            ->orderByDesc('date')
+            ->orderByDesc('iExpensesId')
+            ->limit(100)
+            ->get()
+            ->map(fn (DailyExpense $e): array => [
+                'id' => $e->iExpensesId,
+                'date' => optional($e->date)->format('d/m/Y'),
+                'opening_balance' => (float) ($e->opening_balance ?: 0),
+                'total_income' => (float) ($e->total_income ?: 0),
+                'total_expenses' => (float) ($e->total_expenses ?: 0),
+                'closing_balance' => (float) ($e->closing_balance ?: 0),
+                'category' => $e->expenses_category,
+                'remark' => $e->expenses_remark,
+                'payment_mode' => $e->payment_mode,
+                'person_name' => $e->person_name,
+            ]);
+
+        $summary = [
+            'total_income' => (float) DailyExpense::query()->sum(DB::raw('CAST(total_income AS DECIMAL(12,2))')),
+            'total_expenses' => (float) DailyExpense::query()->sum(DB::raw('CAST(total_expenses AS DECIMAL(12,2))')),
+        ];
+
+        return response()->json(['data' => $expenses, 'summary' => $summary]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'date' => ['required', 'date'],
+            'category' => ['required', 'string', 'max:255'],
+            'total_income' => ['nullable', 'numeric'],
+            'total_expenses' => ['nullable', 'numeric'],
+            'payment_mode' => ['nullable', 'string', 'max:255'],
+            'remark' => ['nullable', 'string', 'max:255'],
+            'person_name' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $nextId = ((int) (DailyExpense::query()->max('iExpensesId') ?? 0)) + 1;
+
+        DB::table('daily_expenses')->insert([
+            'id' => $nextId,
+            'iExpensesId' => $nextId,
+            'date' => $validated['date'],
+            'opening_balance' => '0',
+            'total_income' => (string) ($validated['total_income'] ?? '0'),
+            'total_expenses' => (string) ($validated['total_expenses'] ?? '0'),
+            'closing_balance' => '0',
+            'expenses_category' => $validated['category'],
+            'expenses_remark' => $validated['remark'] ?? '',
+            'payment_mode' => $validated['payment_mode'] ?? '',
+            'remark' => '',
+            'person_name' => $validated['person_name'] ?? '',
+            'created_date' => now(),
+        ]);
+
+        return response()->json(['message' => 'Expense recorded'], 201);
+    }
+}

@@ -1,0 +1,57 @@
+import { useState, type FormEvent } from 'react'
+import { FlaskConical, ShieldCheck } from 'lucide-react'
+import { useAuth } from '../lib/auth'
+import { ForgotPasswordPage } from './ForgotPasswordPage'
+
+export function LoginPage() {
+  const [email, setEmail] = useState('admin@admin.com')
+  const [password, setPassword] = useState('password')
+  const [showForgot, setShowForgot] = useState(false)
+  const { login, error, status } = useAuth()
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    await login(email, password)
+  }
+
+  if (showForgot) {
+    return <ForgotPasswordPage onBack={() => setShowForgot(false)} />
+  }
+
+  return (
+    <main className="login-screen">
+      <section className="login-art">
+        <div className="brand-mark">
+          <FlaskConical size={26} />
+          <span>LabOps ERP</span>
+        </div>
+        <h1>Laboratory Management System</h1>
+        <p>Modern lab operations with Laravel APIs, React frontend, Sanctum auth, billing visibility, and report queues.</p>
+      </section>
+
+      <form className="auth-panel" onSubmit={handleSubmit}>
+        <div>
+          <p className="section-label">Secure access</p>
+          <h2>Sign in</h2>
+        </div>
+        <label>
+          Email
+          <input value={email} onChange={(e) => setEmail(e.target.value)} />
+        </label>
+        <label>
+          Password
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        </label>
+        {error ? <div className="error-banner">{error}</div> : null}
+        <span className="sync-pill" style={{ alignSelf: 'flex-start' }}>{status}</span>
+        <button type="submit">
+          <ShieldCheck size={18} />
+          Sign in
+        </button>
+        <button type="button" className="ghost-button" onClick={() => setShowForgot(true)} style={{ marginTop: '0.5rem' }}>
+          Forgot Password?
+        </button>
+      </form>
+    </main>
+  )
+}

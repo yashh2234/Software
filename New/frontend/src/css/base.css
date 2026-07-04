@@ -1,0 +1,68 @@
+:root {
+  --color-bg: #0d1015;
+  --color-surface: #ffffff;
+  --color-text: #17202a;
+  --color-text-muted: #4a5b66;
+  --color-text-subtle: #65737d;
+  --color-border: #dfe6ea;
+  --color-border-light: #e8eef1;
+  --color-input-bg: #fbfcfd;
+  --color-input-border: #d7e0e5;
+  --color-primary: #327268;
+  --color-primary-dark: #1f665e;
+  --color-accent: #b65f3c;
+  --color-green-bg: #edf6f4;
+  --color-green-border: #cfe2dd;
+  --color-red: #842030;
+  --color-red-bg: #ffe6eb;
+  --color-orange-bg: #fff2dd;
+  --color-orange-text: #5b391d;
+  --color-green: #195340;
+  --color-green-text: #195340;
+  --color-green-pill-bg: #dff6ea;
+  --color-red-text: #7b2634;
+  --color-red-pill-bg: #ffe3e8;
+  --color-sidebar-bg: #142531;
+  --color-sidebar-text: #f8fbfd;
+  --sidebar-width: 260px;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --shadow: 0 12px 30px rgba(31, 48, 58, 0.06);
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #f7f0e8;
+  background: var(--color-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root { min-height: 100vh; }
+
+button, input, select, textarea { font: inherit; }
+
+h1, h2, h3 { margin: 0; letter-spacing: 0; }
+
+a { color: var(--color-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.section-label {
+  margin: 0 0 8px;
+  color: var(--color-accent);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}

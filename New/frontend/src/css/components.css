@@ -1,0 +1,259 @@
+/* ===== Buttons ===== */
+button { cursor: pointer; }
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  min-width: 42px;
+  min-height: 42px;
+  padding: 0;
+  color: #25313a;
+  background: #ffffff;
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius);
+  font-weight: 800;
+}
+
+.ghost-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  color: var(--color-primary-dark);
+  background: var(--color-green-bg);
+  border: 1px solid var(--color-green-border);
+  border-radius: var(--radius);
+  font-weight: 800;
+}
+
+button[type="submit"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 20px;
+  color: #ffffff;
+  background: var(--color-primary-dark);
+  border: 0;
+  border-radius: var(--radius);
+  font-weight: 800;
+}
+
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== Inputs ===== */
+input, select, textarea {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-input-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  background: var(--color-input-bg);
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(50, 114, 104, 0.12);
+}
+
+input[readonly] {
+  background: #f0f3f5;
+  cursor: default;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.search-field {
+  position: relative;
+  min-width: min(100%, 320px);
+}
+
+.search-field svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  color: var(--color-text-subtle);
+  transform: translateY(-50%);
+}
+
+.search-field input { padding-left: 38px; }
+
+/* ===== Pills & Tags ===== */
+.sync-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 999px;
+  color: var(--color-text-muted);
+  background: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.status-tag {
+  min-width: 78px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: var(--color-orange-text);
+  background: var(--color-orange-bg);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.status-tag.complete {
+  color: var(--color-green-text);
+  background: var(--color-green-pill-bg);
+}
+
+.status-tag.cancel {
+  color: var(--color-red-text);
+  background: var(--color-red-pill-bg);
+}
+
+/* ===== Tables ===== */
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+th, td {
+  padding: 13px 12px;
+  border-bottom: 1px solid var(--color-border-light);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--color-text-subtle);
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+td {
+  color: #25313a;
+  font-size: 0.92rem;
+}
+
+/* ===== Cards & Surfaces ===== */
+.surface {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 18px;
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+}
+
+.surface-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.surface h2 { font-size: 1.45rem; }
+
+.metric-tile {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 8px 10px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+}
+
+.metric-tile svg { color: var(--color-primary); }
+.metric-tile span, .metric-tile small { color: var(--color-text-subtle); }
+.metric-tile strong { grid-column: 1 / -1; font-size: 1.7rem; }
+.metric-tile small { grid-column: 1 / -1; font-weight: 700; }
+
+/* ===== States ===== */
+.empty-state {
+  margin: 0;
+  padding: 13px 14px;
+  border-radius: var(--radius);
+  color: var(--color-text-subtle);
+  background: var(--color-input-bg);
+}
+
+.error-banner {
+  padding: 13px 14px;
+  border-radius: var(--radius);
+  color: var(--color-red);
+  background: var(--color-red-bg);
+  font-weight: 700;
+}
+
+.success-banner {
+  padding: 13px 14px;
+  border-radius: var(--radius);
+  color: var(--color-green);
+  background: var(--color-green-bg);
+  font-weight: 700;
+}
+
+/* ===== Badges ===== */
+.badge-active {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--color-green-text, #0f6e4a);
+  background: var(--color-green-bg, #e6f7f0);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.badge-inactive {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--color-red-text, #b91c1c);
+  background: var(--color-red-bg, #fef2f2);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* ===== Checkbox ===== */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  min-height: 18px;
+  cursor: pointer;
+}
+
+/* ===== Utility ===== */
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}

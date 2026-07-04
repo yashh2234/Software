@@ -1,0 +1,183 @@
+/* ===== Dashboard ===== */
+.metric-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.view { display: none; }
+.view.visible { display: block; }
+
+.two-column {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.8fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.module-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+  background: var(--color-input-bg);
+  font-weight: 800;
+}
+
+.module-item svg { color: var(--color-primary); }
+
+.summary-list { display: grid; gap: 12px; }
+
+.summary-list span {
+  padding: 14px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+  background: var(--color-input-bg);
+  font-weight: 700;
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.role-card {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+  background: var(--color-input-bg);
+}
+
+.role-card strong { color: var(--color-text); }
+.role-card span, .role-card small { color: var(--color-text-subtle); }
+
+.session-stack { display: grid; gap: 10px; }
+
+.session-row {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+  background: var(--color-input-bg);
+}
+
+.session-row strong { color: var(--color-text); }
+.session-row span, .session-row small { color: var(--color-text-subtle); }
+
+/* ===== Users ===== */
+.users-layout {
+  grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+}
+
+.user-toolbar {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-form { align-content: start; }
+.user-form select, .user-form input { width: 100%; }
+.user-actions { justify-content: flex-start; }
+
+/* ===== Reports ===== */
+.reports-layout {
+  grid-template-columns: minmax(0, 1fr) 420px;
+}
+
+.report-stack { display: grid; gap: 12px; }
+
+.report-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+  background: var(--color-input-bg);
+}
+
+.report-row div:first-child { display: grid; gap: 5px; }
+.report-row span, .report-row small { color: var(--color-text-subtle); }
+
+.report-form { align-content: start; }
+.report-form button { margin-top: 4px; }
+
+/* ===== Forms ===== */
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.form-actions {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ===== Charts ===== */
+.chart-container { padding: 8px 0; }
+.chart-container h3 { margin: 0 0 12px; font-size: 1rem; }
+
+/* ===== Reports type sidebar ===== */
+.type-nav { display: grid; gap: 4px; }
+.type-nav-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  text-align: left;
+  font-weight: 500;
+  cursor: pointer;
+}
+.type-nav-item.active {
+  background: var(--color-green-bg);
+  border-color: var(--color-green-border);
+  font-weight: 700;
+}
+.type-nav-item:hover { background: var(--color-input-bg); }
+.type-nav-count {
+  font-size: 0.78rem;
+  color: var(--color-text-subtle);
+}
+.type-nav-count.warning { color: var(--color-accent); }
+
+/* Settings specific */
+.settings-section {
+  display: grid;
+  gap: 16px;
+}
+
+.setting-row {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.setting-row:last-child { border-bottom: 0; }
+.setting-label { font-weight: 700; color: var(--color-text-muted); }
