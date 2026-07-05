@@ -1,21 +1,21 @@
-import { useState, type FormEvent } from 'react'
-import { FlaskConical, ShieldCheck } from 'lucide-react'
-import { useAuth } from '../lib/auth'
-import { ForgotPasswordPage } from './ForgotPasswordPage'
+import { useState, type FormEvent } from "react";
+import { FlaskConical, ShieldCheck } from "lucide-react";
+import { useAuth } from "../lib/auth";
+import { ForgotPasswordPage } from "./ForgotPasswordPage";
 
 export function LoginPage() {
-  const [email, setEmail] = useState('admin@admin.com')
-  const [password, setPassword] = useState('password')
-  const [showForgot, setShowForgot] = useState(false)
-  const { login, error, status } = useAuth()
+  const [email, setEmail] = useState("admin@admin.com");
+  const [password, setPassword] = useState("password");
+  const [showForgot, setShowForgot] = useState(false);
+  const { login, error, status } = useAuth();
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    await login(email, password)
-  }
+    event.preventDefault();
+    await login(email, password);
+  };
 
   if (showForgot) {
-    return <ForgotPasswordPage onBack={() => setShowForgot(false)} />
+    return <ForgotPasswordPage onBack={() => setShowForgot(false)} />;
   }
 
   return (
@@ -23,11 +23,14 @@ export function LoginPage() {
       <section className="login-art">
         <div className="brand-mark">
           <FlaskConical size={26} />
-          <span>LabOps ERP</span>
+          <span>Namotech Consultancy</span>
         </div>
-        <p className="section-label">Materials Testing</p>
-<h1>Every result, traceable to the sample it came from.</h1>
-<p>From intake to certified report — registrations, lab observations, approvals, and billing, all in one record per job.</p>
+        <p className="section-label">NCRC</p>
+        <h1>Internal Software</h1>
+        <p>
+          From intake to certified report — registrations, lab observations,
+          approvals, and billing, all in one record per job.
+        </p>
       </section>
 
       <form className="auth-panel" onSubmit={handleSubmit}>
@@ -41,18 +44,29 @@ export function LoginPage() {
         </label>
         <label>
           Password
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </label>
         {error ? <div className="error-banner">{error}</div> : null}
-        <span className="sync-pill" style={{ alignSelf: 'flex-start' }}>{status}</span>
+        <span className="sync-pill" style={{ alignSelf: "flex-start" }}>
+          {status}
+        </span>
         <button type="submit">
           <ShieldCheck size={18} />
           Sign in
         </button>
-        <button type="button" className="ghost-button" onClick={() => setShowForgot(true)} style={{ marginTop: '0.5rem' }}>
+        <button
+          type="button"
+          className="ghost-button"
+          onClick={() => setShowForgot(true)}
+          style={{ marginTop: "0.5rem" }}
+        >
           Forgot Password?
         </button>
       </form>
     </main>
-  )
+  );
 }

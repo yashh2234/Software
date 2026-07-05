@@ -48,7 +48,7 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
         <section className="login-art">
           <div className="brand-mark">
             <FlaskConical size={26} />
-            <span>LabOps ERP</span>
+            <span>NCRC</span>
           </div>
           <h1>Forgot Password</h1>
           <p>Enter your email address to receive a password reset token.</p>
@@ -80,7 +80,7 @@ export function ForgotPasswordPage({ onBack }: ForgotPasswordPageProps) {
       <section className="login-art">
         <div className="brand-mark">
           <FlaskConical size={26} />
-          <span>LabOps ERP</span>
+          <span>NCRC</span>
         </div>
         <h1>Reset Password</h1>
         <p>Use the token to set a new password for your account.</p>

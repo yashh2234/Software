@@ -13,7 +13,7 @@ export function Layout({ children }: LayoutProps) {
       <aside className="sidebar">
         <div className="brand-mark">
           <FlaskConical size={24} />
-          <span>LabOps ERP</span>
+          <span>NCRC</span>
         </div>
 
         <nav>
