@@ -192,24 +192,24 @@
   text-align: left;
   padding: 10px 12px;
   font-weight: 700;
-  color: #4a5b66;
-  border-bottom: 2px solid #e8eef1;
-  font-size: 0.8rem;
+  color: var(--color-text-subtle);
+  border-bottom: 2px solid var(--color-border-light);
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.08em;
 }
 .analytics-table td {
   padding: 10px 12px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-border-light);
 }
 .analytics-table tbody tr:hover {
-  background: #f9fafb;
+  background: var(--surface-sunken);
 }
 
 /* ===== Modal Overlay ===== */
 .success-banner {
-  background: #d1fae5;
-  color: #0a5c3c;
+  background: var(--color-green-bg);
+  color: var(--color-green);
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   font-size: 0.85rem;

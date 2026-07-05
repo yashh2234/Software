@@ -25,8 +25,9 @@ export function LoginPage() {
           <FlaskConical size={26} />
           <span>LabOps ERP</span>
         </div>
-        <h1>Laboratory Management System</h1>
-        <p>Modern lab operations with Laravel APIs, React frontend, Sanctum auth, billing visibility, and report queues.</p>
+        <p className="section-label">Materials Testing</p>
+<h1>Every result, traceable to the sample it came from.</h1>
+<p>From intake to certified report — registrations, lab observations, approvals, and billing, all in one record per job.</p>
       </section>
 
       <form className="auth-panel" onSubmit={handleSubmit}>

@@ -1,33 +1,80 @@
+/*
+  Design system — "Calibration"
+  A construction-materials testing lab lives and dies by precise
+  measurement: tolerances, tick marks, certified readings. This palette
+  and type system take their cue from that world — deep instrument-panel
+  ink, a single calibrated-amber accent (the color of warning tape and
+  dial needles), and a monospace face reserved for anything that is a
+  measured value: IDs, dates, quantities, test results.
+*/
+
 :root {
-  --color-bg: #0d1015;
+  /* ---- Ink & neutrals ---- */
+  --ink-950: #0b1220;
+  --ink-800: #16213a;
+  --ink-700: #1e2a44;
+  --ink-600: #2c3b5c;
+
+  --paper: #f5f6f9;
+  --color-bg: #f5f6f9;
   --color-surface: #ffffff;
-  --color-text: #17202a;
-  --color-text-muted: #4a5b66;
-  --color-text-subtle: #65737d;
-  --color-border: #dfe6ea;
-  --color-border-light: #e8eef1;
-  --color-input-bg: #fbfcfd;
-  --color-input-border: #d7e0e5;
-  --color-primary: #327268;
-  --color-primary-dark: #1f665e;
-  --color-accent: #b65f3c;
-  --color-green-bg: #edf6f4;
-  --color-green-border: #cfe2dd;
-  --color-red: #842030;
-  --color-red-bg: #ffe6eb;
-  --color-orange-bg: #fff2dd;
-  --color-orange-text: #5b391d;
-  --color-green: #195340;
-  --color-green-text: #195340;
-  --color-green-pill-bg: #dff6ea;
-  --color-red-text: #7b2634;
-  --color-red-pill-bg: #ffe3e8;
-  --color-sidebar-bg: #142531;
-  --color-sidebar-text: #f8fbfd;
-  --sidebar-width: 260px;
-  --radius: 8px;
-  --radius-sm: 6px;
-  --shadow: 0 12px 30px rgba(31, 48, 58, 0.06);
+  --surface-raised: #ffffff;
+  --surface-sunken: #eef0f4;
+
+  --color-text: #101827;
+  --color-text-muted: #52627a;
+  --color-text-subtle: #7c8aa0;
+
+  --color-border: #dfe3ec;
+  --color-border-light: #e9ecf3;
+  --color-input-bg: #f8f9fc;
+  --color-input-border: #d7dce6;
+
+  /* ---- Accent: calibrated amber ---- */
+  --color-accent: #c26a2b;
+  --color-accent-dark: #9a5320;
+  --accent-tint: #fbeee0;
+  --accent-tint-border: #f0d5b8;
+
+  /* ---- Primary: deep instrument blue ---- */
+  --color-primary: #1e3a5f;
+  --color-primary-dark: #142a47;
+  --color-primary-tint: #e8edf5;
+
+  /* ---- Status ---- */
+  --color-green: #146c53;
+  --color-green-text: #146c53;
+  --color-green-bg: #e6f4ef;
+  --color-green-border: #c7e4d9;
+  --color-green-pill-bg: #dcf2e9;
+
+  --color-red: #9c3b3b;
+  --color-red-text: #9c3b3b;
+  --color-red-bg: #fbeaea;
+  --color-red-pill-bg: #f7dede;
+
+  --color-orange-text: #8a5a19;
+  --color-orange-bg: #fbf0dd;
+
+  /* ---- Sidebar (dark instrument panel) ---- */
+  --color-sidebar-bg: #0b1220;
+  --color-sidebar-bg-raised: #131d33;
+  --color-sidebar-text: #eef1f7;
+  --color-sidebar-border: rgba(255, 255, 255, 0.08);
+
+  --sidebar-width: 264px;
+
+  /* ---- Shape & elevation ---- */
+  --radius: 10px;
+  --radius-sm: 7px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 39, 0.05);
+  --shadow: 0 8px 24px rgba(16, 24, 39, 0.08);
+  --shadow-lg: 0 24px 48px rgba(16, 24, 39, 0.14);
+
+  /* ---- Type ---- */
+  --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-data: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -38,11 +85,11 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-ui);
   line-height: 1.5;
   font-weight: 400;
-  color: #f7f0e8;
-  background: var(--color-bg);
+  color: var(--color-text);
+  background: var(--paper);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -53,16 +100,53 @@ body {
 
 button, input, select, textarea { font: inherit; }
 
-h1, h2, h3 { margin: 0; letter-spacing: 0; }
+h1, h2, h3 { margin: 0; letter-spacing: -0.01em; font-weight: 700; }
 
 a { color: var(--color-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
+/* Numeric / data values get the monospace treatment throughout the app */
+.data-value,
+.metric-tile strong,
+td.data-cell,
+.mono {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
 .section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin: 0 0 8px;
-  color: var(--color-accent);
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  color: var(--color-accent-dark);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.section-label::before {
+  content: '';
+  width: 10px;
+  height: 2px;
+  background: var(--color-accent);
+  border-radius: 2px;
+}
+
+/* Visible keyboard focus everywhere */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
