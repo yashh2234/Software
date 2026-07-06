@@ -12,8 +12,7 @@ return new class extends Migration
 
         Schema::table('reports', function (Blueprint $table) use ($schema): void {
             if (! $schema->hasColumn('reports', 'assigned_to')) {
-                $table->unsignedBigInteger('assigned_to')->nullable()->after('status');
-                $table->foreign('assigned_to')->references('id')->on('users')->nullOnDelete();
+                $table->unsignedInteger('assigned_to')->nullable()->after('status');
             }
             if (! $schema->hasColumn('reports', 'assigned_at')) {
                 $table->timestamp('assigned_at')->nullable()->after('assigned_to');
@@ -28,8 +27,7 @@ return new class extends Migration
                 $table->timestamp('approved_at')->nullable()->after('report_generated_at');
             }
             if (! $schema->hasColumn('reports', 'approved_by')) {
-                $table->unsignedBigInteger('approved_by')->nullable()->after('approved_at');
-                $table->foreign('approved_by')->references('id')->on('users')->nullOnDelete();
+                $table->unsignedInteger('approved_by')->nullable()->after('approved_at');
             }
         });
     }
@@ -44,4 +42,5 @@ return new class extends Migration
             }
         });
     }
+
 };

@@ -22,14 +22,12 @@ return new class extends Migration
         if (! Schema::hasTable('user_activities')) {
             Schema::create('user_activities', function (Blueprint $table): void {
                 $table->bigIncrements('id');
-                $table->unsignedBigInteger('user_id')->index();
+                $table->unsignedInteger('user_id')->index();
                 $table->string('action');
                 $table->string('module')->nullable();
                 $table->text('details')->nullable();
                 $table->string('ip_address', 45)->nullable();
                 $table->timestamp('created_at')->nullable();
-
-                $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
             });
         }
     }

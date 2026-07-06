@@ -8,9 +8,13 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('login_sessions')) {
+            return;
+        }
+
         Schema::create('login_sessions', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->unsignedInteger('user_id')->index();
             $table->unsignedBigInteger('personal_access_token_id')->nullable()->unique();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();

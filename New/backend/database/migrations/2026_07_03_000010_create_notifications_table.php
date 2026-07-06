@@ -18,8 +18,6 @@ return new class extends Migration
                 $table->json('data')->nullable();
                 $table->timestamp('read_at')->nullable();
                 $table->timestamp('created_at')->nullable();
-
-                $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
             });
         }
     }

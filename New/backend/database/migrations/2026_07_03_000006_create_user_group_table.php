@@ -14,7 +14,8 @@ return new class extends Migration
 
         Schema::create('user_group', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->unsignedInteger('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
             $table->unsignedInteger('group_id');
             $table->unique('user_id');
             $table->index('group_id');

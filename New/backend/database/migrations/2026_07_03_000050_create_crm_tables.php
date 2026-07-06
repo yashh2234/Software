@@ -77,8 +77,7 @@ return new class extends Migration
         // Add client_id to existing client_registration table
         if (Schema::hasTable('client_registration') && !Schema::hasColumn('client_registration', 'client_id')) {
             Schema::table('client_registration', function (Blueprint $table): void {
-                $table->unsignedBigInteger('client_id')->nullable()->after('id');
-                $table->foreign('client_id')->references('id')->on('clients')->nullOnDelete();
+                $table->unsignedBigInteger('client_id')->nullable();
             });
         }
     }
