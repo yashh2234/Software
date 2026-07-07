@@ -313,6 +313,22 @@ export interface WorkflowTransition {
   to_stage?: WorkflowStage
 }
 
+export interface Sample {
+  id: number
+  job_id: number
+  sample_name: string | null
+  sample_type: string | null
+  description: string | null
+  quantity: string | null
+  unit: string | null
+  condition: string | null
+  received_date: string | null
+  collected_by: number | null
+  remarks: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
 export interface Job {
   id: number
   workflow_template_id: number | null
@@ -335,9 +351,11 @@ export interface Job {
   current_stage?: WorkflowStage | null
   workflow_template?: WorkflowTemplate | null
   assigned_user?: { id: number; name: string } | null
+  client?: { id: number; company_name: string } | null
   active_stage_tracking?: JobStageTracking | null
   timeline?: JobTimelineEntry[]
   stage_tracking?: JobStageTracking[]
+  samples?: Sample[]
 }
 
 export interface JobTimelineEntry {

@@ -10,7 +10,6 @@ import { SettingsPage } from './pages/SettingsPage'
 import { ExpensesPage } from './pages/ExpensesPage'
 import { PurchaseOrdersPage } from './pages/PurchaseOrdersPage'
 import { LabPage } from './pages/LabPage'
-import { AuditLogPage } from './pages/AuditLogPage'
 import { UserTrackingPage } from './pages/UserTrackingPage'
 import { InvoicePage } from './pages/InvoicePage'
 import { DueReportsPage } from './pages/DueReportsPage'
@@ -31,44 +30,97 @@ import OutsourcePage from './pages/OutsourcePage'
 import { AppShell } from './components/AppShell'
 import { useState } from 'react'
 import type { ModuleKey } from './lib/types'
+import { Briefcase, ClipboardList, FlaskConical, BarChart3, CreditCard, Building2, ShieldCheck, type LucideIcon } from 'lucide-react'
+
+interface NavItem {
+  key: string
+  label: string
+}
+
+interface NavGroup {
+  label: string
+  icon: LucideIcon
+  items: NavItem[]
+}
 
 function AuthenticatedApp() {
   const [activeModule, setActiveModule] = useState<ModuleKey>('dashboard')
 
-  const modules: { key: ModuleKey; label: string }[] = [
-    { key: 'dashboard', label: 'Dashboard' },
-    { key: 'lab', label: 'Lab' },
-    { key: 'users', label: 'Users' },
-    { key: 'roles', label: 'Roles' },
-    { key: 'permissions', label: 'Permissions' },
-    { key: 'clients', label: 'Clients' },
-    { key: 'inquiries', label: 'Inquiries' },
-    { key: 'quotations', label: 'Quotations' },
-    { key: 'work_orders', label: 'Work Orders' },
-    { key: 'registrations', label: 'Registration' },
-    { key: 'billing', label: 'Billing' },
-    { key: 'invoices', label: 'Invoices' },
-    { key: 'reports', label: 'Reports' },
-    { key: 'expenses', label: 'Expenses' },
-    { key: 'purchase_orders', label: 'Purchase Orders' },
-    { key: 'due_reports', label: 'Due Reports' },
-    { key: 'final_reports', label: 'Final Reports' },
-    { key: 'dispatches', label: 'Dispatch' },
-    { key: 'outsource', label: 'Outsource' },
-    { key: 'ulr_links', label: 'ULR Links' },
-    { key: 'stores', label: 'Stores' },
-    { key: 'analytics', label: 'Analytics' },
-    { key: 'workflow_templates', label: 'Workflows' },
-    { key: 'jobs', label: 'Jobs' },
-    { key: 'documents', label: 'Documents' },
-    { key: 'audit', label: 'Audit Log' },
-    { key: 'user_tracking', label: 'User Tracking' },
-    { key: 'settings', label: 'Settings' },
+  const groups: NavGroup[] = [
+    {
+      label: 'Jobs',
+      icon: Briefcase,
+      items: [
+        { key: 'jobs', label: 'All Jobs' },
+      ],
+    },
+    {
+      label: 'Sales',
+      icon: ClipboardList,
+      items: [
+        { key: 'inquiries', label: 'Inquiry' },
+        { key: 'quotations', label: 'Quotation' },
+        { key: 'work_orders', label: 'Work Orders' },
+      ],
+    },
+    {
+      label: 'Laboratory',
+      icon: FlaskConical,
+      items: [
+        { key: 'registrations', label: 'Registration' },
+        { key: 'lab', label: 'Testing' },
+        { key: 'outsource', label: 'Outsource' },
+      ],
+    },
+    {
+      label: 'Reports',
+      icon: BarChart3,
+      items: [
+        { key: 'reports', label: 'All Reports' },
+        { key: 'due_reports', label: 'Due Reports' },
+        { key: 'final_reports', label: 'Final Reports' },
+      ],
+    },
+    {
+      label: 'Finance',
+      icon: CreditCard,
+      items: [
+        { key: 'billing', label: 'Billing' },
+        { key: 'invoices', label: 'Invoices' },
+        { key: 'dispatches', label: 'Dispatch' },
+        { key: 'expenses', label: 'Expenses' },
+        { key: 'purchase_orders', label: 'Purchase Orders' },
+      ],
+    },
+    {
+      label: 'Masters',
+      icon: Building2,
+      items: [
+        { key: 'clients', label: 'Clients' },
+        { key: 'users', label: 'Users' },
+        { key: 'stores', label: 'Stores' },
+        { key: 'ulr_links', label: 'ULR Links' },
+      ],
+    },
+    {
+      label: 'Administration',
+      icon: ShieldCheck,
+      items: [
+        { key: 'roles', label: 'Roles' },
+        { key: 'permissions', label: 'Permissions' },
+        { key: 'workflow_templates', label: 'Workflows' },
+        { key: 'documents', label: 'Documents' },
+        { key: 'analytics', label: 'Analytics' },
+        { key: 'audit', label: 'Audit Log' },
+        { key: 'user_tracking', label: 'User Tracking' },
+        { key: 'settings', label: 'Settings' },
+      ],
+    },
   ]
 
   return (
     <AppShell
-      modules={modules}
+      groups={groups}
       activeModule={activeModule}
       onModuleChange={(key) => { setActiveModule(key as ModuleKey) }}
     >
@@ -129,12 +181,6 @@ function AuthenticatedApp() {
       <div className={`view ${activeModule === 'stores' ? 'visible' : ''}`}>
         {activeModule === 'stores' && <StoresPage />}
       </div>
-      <div className={`view ${activeModule === 'audit' ? 'visible' : ''}`}>
-        {activeModule === 'audit' && <AuditLogPage />}
-      </div>
-      <div className={`view ${activeModule === 'permissions' ? 'visible' : ''}`}>
-        {activeModule === 'permissions' && <PermissionsPage />}
-      </div>
       <div className={`view ${activeModule === 'analytics' ? 'visible' : ''}`}>
         {activeModule === 'analytics' && <AnalyticsPage />}
       </div>
@@ -152,6 +198,9 @@ function AuthenticatedApp() {
       </div>
       <div className={`view ${activeModule === 'documents' ? 'visible' : ''}`}>
         {activeModule === 'documents' && <DocumentLibraryPage />}
+      </div>
+      <div className={`view ${activeModule === 'permissions' ? 'visible' : ''}`}>
+        {activeModule === 'permissions' && <PermissionsPage />}
       </div>
       <div className={`view ${activeModule === 'settings' ? 'visible' : ''}`}>
         {activeModule === 'settings' && <SettingsPage />}

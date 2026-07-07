@@ -147,6 +147,44 @@
 
 .sidebar nav button.active::before { height: 20px; }
 
+.sidebar nav .nav-group {
+  margin-top: 4px;
+}
+
+.sidebar nav .nav-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 18px;
+  color: rgba(238, 241, 247, 0.45);
+  background: transparent;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color 0.12s;
+}
+
+.sidebar nav .nav-group-header:hover {
+  color: rgba(238, 241, 247, 0.7);
+}
+
+.sidebar nav .nav-group-header span {
+  flex: 1;
+}
+
+.sidebar nav .nav-child {
+  padding-left: 32px;
+  min-height: 34px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .user-block {
   display: grid;
   gap: 4px;

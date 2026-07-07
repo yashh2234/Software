@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Bell, FlaskConical, RefreshCcw, LogOut, LayoutDashboard, Users, ClipboardList, ReceiptText, BarChart3, ShieldCheck, IndianRupee, FileText, Settings, History, Search, Check, Receipt, AlertTriangle, ClipboardCheck, Briefcase, Building2 } from 'lucide-react'
+import { Bell, FlaskConical, RefreshCcw, LogOut, LayoutDashboard, Users, ClipboardList, ReceiptText, BarChart3, ShieldCheck, IndianRupee, FileText, Settings, History, Search, Check, Receipt, AlertTriangle, ClipboardCheck, Briefcase, Building2, ChevronDown, ChevronRight, Store, Activity } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
@@ -20,15 +20,26 @@ const iconMap: Record<string, LucideIcon> = {
   due_reports: AlertTriangle,
   final_reports: ClipboardCheck,
   ulr_links: FileText,
-  stores: LayoutDashboard,
-  analytics: BarChart3,
+  stores: Store,
   workflow_templates: Settings,
   jobs: Briefcase,
   permissions: ShieldCheck,
   documents: FileText,
   audit: History,
-  user_tracking: Users,
+  user_tracking: Activity,
   settings: Settings,
+  inquiries: ClipboardList,
+  quotations: ReceiptText,
+  work_orders: FileText,
+  dispatches: FileText,
+  outsource: FlaskConical,
+  departments: Building2,
+  vendors: Building2,
+  tests: FlaskConical,
+  test_categories: FileText,
+  test_standards: FileText,
+  test_methods: FlaskConical,
+  designations: Users,
 }
 
 interface NavItem {
@@ -36,8 +47,14 @@ interface NavItem {
   label: string
 }
 
+interface NavGroup {
+  label: string
+  icon: LucideIcon
+  items: NavItem[]
+}
+
 interface AppShellProps {
-  modules: NavItem[]
+  groups: NavGroup[]
   activeModule: string
   onModuleChange: (key: string) => void
   children: React.ReactNode
@@ -54,7 +71,7 @@ interface NotificationItem {
   time_ago: string | null
 }
 
-export function AppShell({ modules, activeModule, onModuleChange, children }: AppShellProps) {
+export function AppShell({ groups, activeModule, onModuleChange, children }: AppShellProps) {
   const { user, status, logout, refresh, error } = useAuth()
   useTracking()
   const [searchQuery, setSearchQuery] = useState('')
@@ -64,9 +81,23 @@ export function AppShell({ modules, activeModule, onModuleChange, children }: Ap
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [unread, setUnread] = useState(0)
   const [showNotifs, setShowNotifs] = useState(false)
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem('nav_expanded')
+    return saved ? new Set(JSON.parse(saved)) : new Set(['Sales', 'Laboratory', 'Reports', 'Finance', 'Masters', 'Administration'])
+  })
   const searchRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const toggleGroup = (label: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(label)) next.delete(label)
+      else next.add(label)
+      localStorage.setItem('nav_expanded', JSON.stringify([...next]))
+      return next
+    })
+  }
 
   const loadNotifs = useCallback(async () => {
     try {
@@ -130,18 +161,45 @@ export function AppShell({ modules, activeModule, onModuleChange, children }: Ap
         </div>
 
         <nav>
-          {modules.map((item) => {
-            const Icon = iconMap[item.key] || LayoutDashboard
+          {/* Dashboard is always at top, outside groups */}
+          <button
+            className={activeModule === 'dashboard' ? 'active' : ''}
+            onClick={() => onModuleChange('dashboard')}
+            type="button"
+          >
+            <LayoutDashboard size={18} />
+            Dashboard
+          </button>
+
+          {groups.map((group) => {
+            const isExpanded = expandedGroups.has(group.label)
+            const GroupIcon = group.icon
             return (
-              <button
-                className={activeModule === item.key ? 'active' : ''}
-                key={item.key}
-                onClick={() => onModuleChange(item.key)}
-                type="button"
-              >
-                <Icon size={18} />
-                {item.label}
-              </button>
+              <div key={group.label} className="nav-group">
+                <button
+                  className="nav-group-header"
+                  onClick={() => toggleGroup(group.label)}
+                  type="button"
+                >
+                  <GroupIcon size={16} />
+                  <span>{group.label}</span>
+                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </button>
+                {isExpanded ? group.items.map((item) => {
+                  const Icon = iconMap[item.key] || LayoutDashboard
+                  return (
+                    <button
+                      className={activeModule === item.key ? 'active nav-child' : 'nav-child'}
+                      key={item.key}
+                      onClick={() => onModuleChange(item.key)}
+                      type="button"
+                    >
+                      <Icon size={16} />
+                      {item.label}
+                    </button>
+                  )
+                }) : null}
+              </div>
             )
           })}
         </nav>
@@ -156,7 +214,7 @@ export function AppShell({ modules, activeModule, onModuleChange, children }: Ap
         <header className="topbar">
           <div>
             <p className="section-label">Laboratory Management System</p>
-            <h1>{modules.find((m) => m.key === activeModule)?.label ?? 'Dashboard'}</h1>
+            <h1>{activeModule === 'dashboard' ? 'Dashboard' : groups.flatMap((g) => g.items).find((i) => i.key === activeModule)?.label ?? 'Dashboard'}</h1>
           </div>
           <div className="topbar-actions">
             <div ref={searchRef} style={{ position: 'relative' }}>

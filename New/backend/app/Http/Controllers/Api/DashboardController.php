@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Jobs;
 use App\Models\Registration;
 use App\Models\Report;
+use App\Models\WorkflowStage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +19,7 @@ class DashboardController extends Controller
         $isAdmin = (bool) ($user?->isLegacyAdmin() ?? $user?->is_admin ?? false);
         $today = now()->toDateString();
 
+        // Legacy metrics (existing)
         $totalRegistration = Registration::query()->count();
         $totalAmount = (float) Registration::query()->sum('total_payment');
         $totalReceivedAmount = (float) Registration::query()->sum('advance_payment');
@@ -29,10 +32,35 @@ class DashboardController extends Controller
         $pendingReports = Report::query()->where('status', 'Pending')->count();
         $todayReports = Report::query()->whereDate('create_date', $today)->count();
 
+        // Job-based metrics (new workflow)
+        $jobsToday = Jobs::whereDate('created_at', $today)->count();
+        $jobsPendingReview = Jobs::whereHas('currentStage', fn ($q) => $q->where('slug', 'technical-review'))->count();
+        $jobsPendingApproval = Jobs::whereHas('currentStage', fn ($q) => $q->where('slug', 'approval'))->count();
+        $jobsPendingBilling = Jobs::whereHas('currentStage', fn ($q) => $q->where('slug', 'billing'))->count();
+        $jobsPendingDispatch = Jobs::whereHas('currentStage', fn ($q) => $q->where('slug', 'dispatch'))->count();
+        $jobsCompleted = Jobs::where('status', 'completed')->count();
+        $jobsActive = Jobs::where('status', 'active')->count();
+        $jobsCompletedToday = Jobs::where('status', 'completed')->whereDate('completed_at', $today)->count();
+
+        // Overdue jobs (SLA breach)
+        $overdueJobs = Jobs::whereHas('activeStageTracking', fn ($q) => $q->where('is_overdue', true))->count();
+
+        // My pending tasks (based on assigned user)
+        $myPendingJobs = Jobs::where('assigned_to', $user?->id)
+            ->whereIn('status', ['pending', 'active'])
+            ->count();
+
+        // My pending review (if user is a reviewer/approver)
+        $myPendingReviews = Jobs::whereHas('currentStage', fn ($q) => $q->whereIn('slug', ['technical-review', 'approval']))
+            ->where('assigned_to', $user?->id)
+            ->whereIn('status', ['pending', 'active'])
+            ->count();
+
         return response()->json([
             'page_title' => 'Dashboard',
             'is_admin' => $isAdmin,
             'metrics' => [
+                // Legacy
                 'total_registration' => $totalRegistration,
                 'total_reports' => $totalReports,
                 'pending_reports' => $pendingReports,
@@ -46,6 +74,19 @@ class DashboardController extends Controller
                 'today_balance_amount' => $todayBalanceAmount,
                 'expenses_this_month' => 0,
                 'total_balance_amount' => $totalBalanceAmount,
+
+                // Job-based workflow metrics
+                'jobs_today' => $jobsToday,
+                'jobs_active' => $jobsActive,
+                'jobs_completed' => $jobsCompleted,
+                'jobs_completed_today' => $jobsCompletedToday,
+                'jobs_pending_review' => $jobsPendingReview,
+                'jobs_pending_approval' => $jobsPendingApproval,
+                'jobs_pending_billing' => $jobsPendingBilling,
+                'jobs_pending_dispatch' => $jobsPendingDispatch,
+                'jobs_overdue' => $overdueJobs,
+                'my_pending_jobs' => $myPendingJobs,
+                'my_pending_reviews' => $myPendingReviews,
             ],
             'modules' => [
                 'Auth and users',

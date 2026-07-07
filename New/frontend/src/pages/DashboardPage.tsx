@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ClipboardList, FlaskConical, IndianRupee, ReceiptText, ShieldCheck, Check, UserCheck, FileText, Play, Users, Clock, AlertTriangle } from 'lucide-react'
+import { ClipboardList, Check, UserCheck, FileText, AlertTriangle, Briefcase, Eye, ThumbsUp, CreditCard, Truck } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { MetricCard } from '../components/MetricCard'
 import { RegistrationTrendChart, MonthlyRevenueChart, ReportStatusChart } from '../components/Charts'
@@ -38,24 +38,14 @@ function detectRole(permissions: string[], groups: Array<{ id: number; group_nam
 }
 
 export function DashboardPage() {
-  const { user, dashboard, sessions, billingDue, roles } = useAuth()
+  const { user, dashboard, sessions } = useAuth()
   useTracking('dashboard')
   const [trends, setTrends] = useState<TrendsData | null>(null)
   const [trendsLoading, setTrendsLoading] = useState(true)
   const [assignedCount, setAssignedCount] = useState(0)
-  const [slaSummary, setSlaSummary] = useState<{ total_active: number; overdue_count: number; on_track: number } | null>(null)
-  const [trackingSummary, setTrackingSummary] = useState<{
-    online_count: number
-    today_active_users: number
-    today_activities: number
-    today_reports_generated: number
-    today_samples_registered: number
-  } | null>(null)
 
   const role = detectRole(user?.permissions ?? [], user?.groups ?? [])
-  const isReceptionOrAbove = ['admin', 'reception'].includes(role)
-  const isLabOrAbove = ['admin', 'lab_tech'].includes(role)
-  const isApproverOrAbove = ['admin', 'approver'].includes(role)
+  const metrics = dashboard?.metrics ?? {}
 
   const loadTrends = useCallback(async () => {
     setTrendsLoading(true)
@@ -63,116 +53,125 @@ export function DashboardPage() {
       const data = await request<TrendsData>('/dashboard/trends')
       setTrends(data)
     } catch {
-      // Trends are non-critical
     } finally {
       setTrendsLoading(false)
     }
   }, [])
 
   const loadAssigned = useCallback(async () => {
-    if (!isLabOrAbove) return
     try {
       const data = await api.myAssigned()
       setAssignedCount(data.count)
-    } catch {}
-  }, [isLabOrAbove])
-
-  const loadTracking = useCallback(async () => {
-    try {
-      const data = await api.trackSummary()
-      setTrackingSummary(data)
-    } catch {}
-  }, [])
-
-  const loadSla = useCallback(async () => {
-    try {
-      const data = await request<{ total_active: number; overdue_count: number; on_track: number }>('/jobs/sla-summary')
-      setSlaSummary(data)
     } catch {}
   }, [])
 
   useEffect(() => {
     void loadTrends()
     void loadAssigned()
-    if (role === 'admin') {
-      void loadTracking()
-      void loadSla()
-    }
-  }, [loadTrends, loadAssigned, loadTracking, loadSla, role])
+  }, [loadTrends, loadAssigned])
 
-  const adminMetrics = role === 'admin' ? [
+  // Job-based metric cards (always visible)
+  const jobMetrics = [
     {
-      label: 'Active sessions',
-      value: sessions.filter((s) => s.active).length,
-      detail: `${sessions.length} recent logins`,
-      icon: ShieldCheck,
-    },
-    {
-      label: 'Roles',
-      value: roles.length,
-      detail: `${roles.reduce((s, r) => s + r.users_count, 0)} total users`,
-      icon: UserCheck,
-    },
-    ...(slaSummary ? [{
-      label: 'SLA Breaches',
-      value: slaSummary.overdue_count,
-      detail: `${slaSummary.on_track} of ${slaSummary.total_active} on track`,
-      icon: AlertTriangle,
-    }] : []),
-  ] : []
-
-  const receptionMetrics = isReceptionOrAbove ? [
-    {
-      label: 'Registrations',
-      value: dashboard?.metrics.total_registration ?? 0,
-      detail: `${dashboard?.metrics.today_registration ?? 0} today`,
+      label: 'Jobs Today',
+      value: metrics.jobs_today ?? 0,
+      detail: `${metrics.jobs_completed_today ?? 0} completed today`,
       icon: ClipboardList,
     },
     {
-      label: 'Total billing',
-      value: money(dashboard?.metrics.total_amount ?? 0),
-      detail: `${money(dashboard?.metrics.total_received_amount ?? 0)} received`,
-      icon: IndianRupee,
+      label: 'Active Jobs',
+      value: metrics.jobs_active ?? 0,
+      detail: `${metrics.jobs_completed ?? 0} total completed`,
+      icon: Briefcase,
     },
     {
-      label: 'Balance due',
-      value: money(dashboard?.metrics.total_balance_amount ?? 0),
-      detail: `${billingDue.length} invoices open`,
-      icon: ReceiptText,
+      label: 'Pending Review',
+      value: metrics.jobs_pending_review ?? 0,
+      detail: 'Waiting for technical review',
+      icon: Eye,
+      accent: true,
     },
-  ] : []
-
-  const labMetrics = isLabOrAbove ? [
     {
-      label: 'My assigned',
-      value: assignedCount,
-      detail: 'samples in progress',
-      icon: Play,
+      label: 'Pending Approval',
+      value: metrics.jobs_pending_approval ?? 0,
+      detail: 'Waiting for final approval',
+      icon: ThumbsUp,
+      accent: true,
     },
-  ] : []
-
-  const approverMetrics = isApproverOrAbove ? [
     {
-      label: 'Reports',
-      value: dashboard?.metrics.total_reports ?? 0,
-      detail: `${dashboard?.metrics.pending_reports ?? 0} pending`,
-      icon: FlaskConical,
+      label: 'Pending Billing',
+      value: metrics.jobs_pending_billing ?? 0,
+      detail: 'Awaiting invoice generation',
+      icon: CreditCard,
+      accent: true,
     },
-  ] : []
+    {
+      label: 'Pending Dispatch',
+      value: metrics.jobs_pending_dispatch ?? 0,
+      detail: 'Awaiting dispatch',
+      icon: Truck,
+      accent: true,
+    },
+    {
+      label: 'Overdue',
+      value: metrics.jobs_overdue ?? 0,
+      detail: 'SLA breached',
+      icon: AlertTriangle,
+      danger: true,
+    },
+  ]
 
-  const metrics = [...receptionMetrics, ...labMetrics, ...approverMetrics, ...adminMetrics]
+  // My Tasks (role-based)
+  const myTasksCard = () => {
+    const myPending = metrics.my_pending_jobs ?? 0
+    const myReviews = metrics.my_pending_reviews ?? 0
+    const total = myPending + myReviews
+
+    if (total === 0) return null
+
+    return (
+      <section className="surface" style={{ marginBottom: '1.25rem' }}>
+        <div className="surface-heading">
+          <div>
+            <p className="section-label">My Tasks</p>
+            <h2>Assigned to me</h2>
+          </div>
+          <UserCheck size={20} />
+        </div>
+        <div style={{ display: 'flex', gap: 16, padding: '0 20px 20px' }}>
+          {myPending > 0 ? (
+            <div style={{ flex: 1, padding: 16, background: '#edf6f4', borderRadius: 8, textAlign: 'center' }}>
+              <strong style={{ fontSize: '1.5rem', color: '#195340' }}>{myPending}</strong>
+              <p style={{ fontSize: '0.82rem', color: '#327268', margin: '4px 0 0' }}>Pending Jobs</p>
+            </div>
+          ) : null}
+          {myReviews > 0 ? (
+            <div style={{ flex: 1, padding: 16, background: '#fef3c7', borderRadius: 8, textAlign: 'center' }}>
+              <strong style={{ fontSize: '1.5rem', color: '#92400e' }}>{myReviews}</strong>
+              <p style={{ fontSize: '0.82rem', color: '#92400e', margin: '4px 0 0' }}>Pending Reviews</p>
+            </div>
+          ) : null}
+        </div>
+      </section>
+    )
+  }
 
   return (
     <>
+      {/* My Tasks section */}
+      {myTasksCard()}
+
+      {/* Job-based metrics strip */}
       <section className="metric-strip">
-        {metrics.map((m) => (
-          <MetricCard key={m.label} {...m} />
+        {jobMetrics.map((m) => (
+          <MetricCard key={m.label} label={m.label} value={m.value} detail={m.detail} icon={m.icon} />
         ))}
       </section>
 
-      {role === 'admin' || role === 'reception' ? (
+      {/* Legacy metrics for reception */}
+      {(role === 'admin' || role === 'reception') ? (
         <>
-          <div className="two-column">
+          <div className="two-column" style={{ marginTop: '1.25rem' }}>
             <section className="surface">
               <div className="surface-heading">
                 <div>
@@ -208,6 +207,7 @@ export function DashboardPage() {
             </div>
           ) : null}
 
+          {/* Legacy summary */}
           <div className="two-column" style={{ marginTop: '1.25rem' }}>
             <section className="surface">
               <div className="surface-heading">
@@ -217,16 +217,17 @@ export function DashboardPage() {
                 </div>
               </div>
               <div className="summary-list">
-                <span>{dashboard?.metrics.today_registration ?? 0} registrations received</span>
-                <span>{dashboard?.metrics.today_reports ?? 0} reports created</span>
-                <span>{money(dashboard?.metrics.today_balance_amount ?? 0)} balance raised</span>
+                <span>{metrics.today_registration ?? 0} registrations received</span>
+                <span>{metrics.today_reports ?? 0} reports created</span>
+                <span>{money(metrics.today_balance_amount ?? 0)} balance raised</span>
               </div>
             </section>
           </div>
         </>
       ) : null}
 
-      {isLabOrAbove && assignedCount > 0 ? (
+      {/* Lab tech view */}
+      {role === 'lab_tech' && assignedCount > 0 ? (
         <section className="surface" style={{ marginTop: '1.25rem' }}>
           <div className="surface-heading">
             <div>
@@ -241,84 +242,32 @@ export function DashboardPage() {
         </section>
       ) : null}
 
-      <section className="surface" style={{ marginTop: '1.25rem' }}>
-        <div className="surface-heading">
-          <div>
-            <p className="section-label">Security</p>
-            <h2>Recent sessions</h2>
-          </div>
-        </div>
-        <div className="session-stack">
-          {sessions.length === 0 ? (
-            <p className="empty-state">No session history available.</p>
-          ) : (
-            sessions.slice(0, 5).map((session) => (
-              <article className="session-row" key={session.id}>
-                <div>
-                  <strong>{session.ip_address ?? 'Unknown IP'}</strong>
-                  <span>{session.logged_in_at ?? '-'}</span>
-                  <small>{session.last_seen_at ?? session.logged_out_at ?? 'Active now'}</small>
-                </div>
-                <span className={`status-tag ${session.active ? 'complete' : 'cancel'}`}>
-                  {session.active ? 'Active' : 'Closed'}
-                </span>
-              </article>
-            ))
-          )}
-        </div>
-      </section>
-
-      {role === 'admin' && slaSummary ? (
-        <section className="surface" style={{ marginTop: '1.25rem' }}>
-          <div className="surface-heading">
-            <div>
-              <p className="section-label">SLA Monitoring</p>
-              <h2>Job status overview</h2>
-            </div>
-            <Clock size={20} />
-          </div>
-          <div className="summary-list">
-            <span style={{ color: '#10b981' }}>{slaSummary.on_track} jobs on track</span>
-            {slaSummary.overdue_count > 0 ? <span style={{ color: '#ef4444' }}><AlertTriangle size={14} /> {slaSummary.overdue_count} overdue</span> : <span>No overdue jobs</span>}
-            <span>{slaSummary.total_active} active total</span>
-          </div>
-        </section>
-      ) : null}
-
-      {role === 'admin' && trackingSummary ? (
-        <section className="surface" style={{ marginTop: '1.25rem' }}>
-          <div className="surface-heading">
-            <div>
-              <p className="section-label">Live</p>
-              <h2>User tracking summary</h2>
-            </div>
-          </div>
-          <div className="summary-list">
-            <span><Users size={14} /> {trackingSummary.online_count} online now</span>
-            <span>{trackingSummary.today_active_users} active today</span>
-            <span>{trackingSummary.today_activities} total actions</span>
-            <span>{trackingSummary.today_reports_generated} reports generated</span>
-            <span>{trackingSummary.today_samples_registered} samples registered</span>
-          </div>
-        </section>
-      ) : null}
-
+      {/* Session info for admin */}
       {role === 'admin' ? (
         <section className="surface" style={{ marginTop: '1.25rem' }}>
           <div className="surface-heading">
             <div>
-              <p className="section-label">Roles</p>
-              <h2>User groups & permissions</h2>
+              <p className="section-label">Security</p>
+              <h2>Recent sessions</h2>
             </div>
           </div>
-          <div className="role-grid">
-            {roles.map((role) => (
-              <article className="role-card" key={role.id}>
-                <strong>{role.name}</strong>
-                <span>{role.users_count} users</span>
-                <small>{role.permissions_count} permissions</small>
-              </article>
-            ))}
+          <div className="session-stack">
+            {sessions.length === 0 ? (
+              <p className="empty-state">No session history available.</p>
+            ) : (
+              sessions.slice(0, 5).map((session) => (
+                <article className="session-row" key={session.id}>
+                  <div>
+                    <strong>{session.ip_address ?? 'Unknown IP'}</strong>
+                    <span>{session.logged_in_at ?? '-'}</span>
+                    <small>{session.last_seen_at ?? session.logged_out_at ?? 'Active now'}</small>
+                  </div>
+                  <span className={`status-tag ${session.active ? 'complete' : 'cancel'}`}>
+                    {session.active ? 'Active' : 'Closed'}
+                  </span>
+                </article>
+              ))
+            )}
           </div>
         </section>
       ) : null}

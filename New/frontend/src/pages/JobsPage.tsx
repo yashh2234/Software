@@ -78,6 +78,11 @@ export function JobsPage() {
     if (id) setSelectedJobId(id)
   }
 
+  // Show detail page when a job is selected
+  if (selectedJobId) {
+    return <JobDetailPage jobId={selectedJobId} onBack={() => { setSelectedJobId(null); void loadJobs() }} />
+  }
+
   return (
     <div className="surface">
       <div className="surface-heading">
@@ -119,10 +124,6 @@ export function JobsPage() {
       ) : (
         <DataTable columns={columns} rows={rows} pageSize={20} filename="jobs-export" onRowClick={handleRowClick} />
       )}
-
-      {selectedJobId ? (
-        <JobDetailPage jobId={selectedJobId} onClose={() => { setSelectedJobId(null); void loadJobs() }} />
-      ) : null}
     </div>
   )
 }

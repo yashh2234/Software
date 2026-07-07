@@ -83,4 +83,14 @@ class Jobs extends Model
     {
         return $this->hasMany(Report::class, 'uid_no', 'uid_no');
     }
+
+    public function samples(): HasMany
+    {
+        return $this->hasMany(Sample::class, 'job_id');
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class, 'client_id');
+    }
 }

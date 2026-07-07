@@ -286,7 +286,22 @@ class WorkflowEngine
     }
 
     /**
-     * Seed the default lab workflow template.
+     * Seed the default lab workflow template with the full 13-stage lifecycle.
+     *
+     * Stages:
+     *  1. Inquiry
+     *  2. Quotation
+     *  3. Work Order
+     *  4. Registration
+     *  5. Sample Received
+     *  6. Assigned
+     *  7. Testing
+     *  8. Report Draft
+     *  9. Technical Review
+     * 10. Approval
+     * 11. Billing
+     * 12. Dispatch
+     * 13. Completed
      */
     public static function seedDefaultWorkflow(): void
     {
@@ -294,20 +309,26 @@ class WorkflowEngine
             ['slug' => 'standard-lab-workflow'],
             [
                 'name' => 'Standard Lab Workflow',
-                'description' => 'Default workflow for laboratory testing jobs.',
+                'slug' => 'standard-lab-workflow',
+                'description' => 'Full lifecycle workflow from inquiry to completion.',
                 'is_active' => true,
             ]
         );
 
         $stageData = [
-            ['name' => 'Registration', 'slug' => 'registration', 'sort_order' => 1, 'is_start' => true, 'color' => '#3b82f6', 'sla_hours' => 2],
-            ['name' => 'Sample Collection', 'slug' => 'sample-collection', 'sort_order' => 2, 'color' => '#8b5cf6', 'sla_hours' => 24],
-            ['name' => 'Lab Testing', 'slug' => 'lab-testing', 'sort_order' => 3, 'color' => '#f59e0b', 'sla_hours' => 72],
-            ['name' => 'Report Generation', 'slug' => 'report-generation', 'sort_order' => 4, 'color' => '#10b981', 'sla_hours' => 24],
-            ['name' => 'Approval', 'slug' => 'approval', 'sort_order' => 5, 'color' => '#ef4444', 'sla_hours' => 12],
-            ['name' => 'Dispatch', 'slug' => 'dispatch', 'sort_order' => 6, 'color' => '#06b6d4', 'sla_hours' => 6],
-            ['name' => 'Billing', 'slug' => 'billing', 'sort_order' => 7, 'color' => '#14b8a6', 'sla_hours' => 48],
-            ['name' => 'Completed', 'slug' => 'completed', 'sort_order' => 8, 'is_end' => true, 'color' => '#22c55e'],
+            ['name' => 'Inquiry',          'slug' => 'inquiry',          'sort_order' => 1,  'is_start' => true,  'color' => '#6b7280', 'sla_hours' => 24],
+            ['name' => 'Quotation',        'slug' => 'quotation',        'sort_order' => 2,  'color' => '#8b5cf6', 'sla_hours' => 24],
+            ['name' => 'Work Order',       'slug' => 'work-order',       'sort_order' => 3,  'color' => '#3b82f6', 'sla_hours' => 48],
+            ['name' => 'Registration',     'slug' => 'registration',     'sort_order' => 4,  'color' => '#06b6d4', 'sla_hours' => 2],
+            ['name' => 'Sample Received',  'slug' => 'sample-received',  'sort_order' => 5,  'color' => '#14b8a6', 'sla_hours' => 24],
+            ['name' => 'Assigned',         'slug' => 'assigned',         'sort_order' => 6,  'color' => '#f59e0b', 'sla_hours' => 4],
+            ['name' => 'Testing',          'slug' => 'testing',          'sort_order' => 7,  'color' => '#ef4444', 'sla_hours' => 72],
+            ['name' => 'Report Draft',     'slug' => 'report-draft',     'sort_order' => 8,  'color' => '#f97316', 'sla_hours' => 24],
+            ['name' => 'Technical Review', 'slug' => 'technical-review', 'sort_order' => 9,  'color' => '#ec4899', 'sla_hours' => 12],
+            ['name' => 'Approval',         'slug' => 'approval',         'sort_order' => 10, 'color' => '#10b981', 'sla_hours' => 12],
+            ['name' => 'Billing',          'slug' => 'billing',          'sort_order' => 11, 'color' => '#6366f1', 'sla_hours' => 48],
+            ['name' => 'Dispatch',         'slug' => 'dispatch',         'sort_order' => 12, 'color' => '#0ea5e9', 'sla_hours' => 6],
+            ['name' => 'Completed',        'slug' => 'completed',        'sort_order' => 13, 'is_end' => true,    'color' => '#22c55e'],
         ];
 
         $stages = [];
@@ -320,15 +341,24 @@ class WorkflowEngine
         }
 
         $transitions = [
-            ['from' => 'registration', 'to' => 'sample-collection', 'name' => 'Collect Samples'],
-            ['from' => 'sample-collection', 'to' => 'lab-testing', 'name' => 'Start Testing'],
-            ['from' => 'lab-testing', 'to' => 'report-generation', 'name' => 'Generate Report'],
-            ['from' => 'report-generation', 'to' => 'approval', 'name' => 'Submit for Approval'],
-            ['from' => 'approval', 'to' => 'dispatch', 'name' => 'Approve & Dispatch'],
-            ['from' => 'dispatch', 'to' => 'billing', 'name' => 'Send for Billing'],
-            ['from' => 'billing', 'to' => 'completed', 'name' => 'Mark Completed'],
-            ['from' => 'approval', 'to' => 'lab-testing', 'name' => 'Return for Retesting'],
-            ['from' => 'dispatch', 'to' => 'approval', 'name' => 'Return to Approval'],
+            // Forward transitions
+            ['from' => 'inquiry',          'to' => 'quotation',        'name' => 'Convert to Quotation'],
+            ['from' => 'quotation',        'to' => 'work-order',       'name' => 'Approve & Create Work Order'],
+            ['from' => 'work-order',       'to' => 'registration',     'name' => 'Register Job'],
+            ['from' => 'registration',     'to' => 'sample-received',  'name' => 'Receive Samples'],
+            ['from' => 'sample-received',  'to' => 'assigned',         'name' => 'Assign to Department'],
+            ['from' => 'assigned',         'to' => 'testing',          'name' => 'Start Testing'],
+            ['from' => 'testing',          'to' => 'report-draft',     'name' => 'Generate Report'],
+            ['from' => 'report-draft',     'to' => 'technical-review', 'name' => 'Submit for Review'],
+            ['from' => 'technical-review', 'to' => 'approval',         'name' => 'Approve Report'],
+            ['from' => 'approval',         'to' => 'billing',          'name' => 'Send for Billing'],
+            ['from' => 'billing',          'to' => 'dispatch',         'name' => 'Mark for Dispatch'],
+            ['from' => 'dispatch',         'to' => 'completed',        'name' => 'Mark Completed'],
+
+            // Return / correction transitions
+            ['from' => 'technical-review', 'to' => 'report-draft',     'name' => 'Return for Correction'],
+            ['from' => 'approval',         'to' => 'technical-review', 'name' => 'Return for Review'],
+            ['from' => 'billing',          'to' => 'approval',         'name' => 'Return to Approval'],
         ];
 
         foreach ($transitions as $t) {

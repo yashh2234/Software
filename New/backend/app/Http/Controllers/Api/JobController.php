@@ -66,6 +66,8 @@ class JobController extends Controller
                 'currentStage',
                 'workflowTemplate.stages',
                 'assignedUser',
+                'client',
+                'samples',
                 'timeline.user',
                 'timeline.fromStage',
                 'timeline.toStage',
