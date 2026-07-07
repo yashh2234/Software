@@ -28,6 +28,11 @@ use App\Http\Controllers\Api\DocumentCategoryController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\InquiryController;
+use App\Http\Controllers\Api\QuotationController;
+use App\Http\Controllers\Api\WorkOrderController;
+use App\Http\Controllers\Api\DispatchController;
+use App\Http\Controllers\Api\OutsourceAssignmentController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -213,5 +218,48 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::prefix('analytics')->group(function (): void {
         Route::get('summary', [AnalyticsController::class, 'summary']);
         Route::get('export/{type}', [AnalyticsController::class, 'exportCsv']);
+    });
+
+    Route::prefix('inquiries')->group(function (): void {
+        Route::get('/', [InquiryController::class, 'index']);
+        Route::post('/', [InquiryController::class, 'store']);
+        Route::get('{inquiry}', [InquiryController::class, 'show']);
+        Route::put('{inquiry}', [InquiryController::class, 'update']);
+        Route::delete('{inquiry}', [InquiryController::class, 'destroy']);
+        Route::post('{inquiry}/convert', [InquiryController::class, 'convertToQuotation']);
+    });
+
+    Route::prefix('quotations')->group(function (): void {
+        Route::get('/', [QuotationController::class, 'index']);
+        Route::post('/', [QuotationController::class, 'store']);
+        Route::get('{quotation}', [QuotationController::class, 'show']);
+        Route::put('{quotation}', [QuotationController::class, 'update']);
+        Route::delete('{quotation}', [QuotationController::class, 'destroy']);
+        Route::get('{quotation}/print', [QuotationController::class, 'printDiv']);
+    });
+
+    Route::prefix('work-orders')->group(function (): void {
+        Route::get('/', [WorkOrderController::class, 'index']);
+        Route::post('/', [WorkOrderController::class, 'store']);
+        Route::get('{workOrder}', [WorkOrderController::class, 'show']);
+        Route::put('{workOrder}', [WorkOrderController::class, 'update']);
+        Route::delete('{workOrder}', [WorkOrderController::class, 'destroy']);
+        Route::get('{workOrder}/print', [WorkOrderController::class, 'printDiv']);
+    });
+
+    Route::prefix('dispatches')->group(function (): void {
+        Route::get('/', [DispatchController::class, 'index']);
+        Route::post('/', [DispatchController::class, 'store']);
+        Route::get('{dispatch}', [DispatchController::class, 'show']);
+        Route::put('{dispatch}', [DispatchController::class, 'update']);
+        Route::delete('{dispatch}', [DispatchController::class, 'destroy']);
+    });
+
+    Route::prefix('outsource')->group(function (): void {
+        Route::get('/', [OutsourceAssignmentController::class, 'index']);
+        Route::post('/', [OutsourceAssignmentController::class, 'store']);
+        Route::get('{outsourceAssignment}', [OutsourceAssignmentController::class, 'show']);
+        Route::put('{outsourceAssignment}', [OutsourceAssignmentController::class, 'update']);
+        Route::delete('{outsourceAssignment}', [OutsourceAssignmentController::class, 'destroy']);
     });
 });

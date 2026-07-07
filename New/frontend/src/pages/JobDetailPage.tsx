@@ -1,7 +1,7 @@
-import { useState, useEffect, type FormEvent } from 'react'
-import { X, Circle, ArrowRight, Clock, AlertTriangle, User, Check, RotateCcw, Send, Activity, FileText, Play, Ban } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, Circle, ArrowRight, Clock, User, Check, RotateCcw, Send, Activity, FileText, Ban } from 'lucide-react'
 import { request } from '../lib/api'
-import type { Job, WorkflowTransition, WorkflowStage } from '../lib/types'
+import type { Job, WorkflowTransition } from '../lib/types'
 
 interface JobDetailPageProps {
   jobId: number
@@ -19,7 +19,6 @@ export function JobDetailPage({ jobId, onClose }: JobDetailPageProps) {
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
   const [assignUserId, setAssignUserId] = useState<number | null>(null)
-  const [users, setUsers] = useState<Array<{ id: number; name: string }>>([])
   const [activeTab, setActiveTab] = useState<'timeline' | 'details' | 'transitions'>('details')
 
   useEffect(() => { loadJob() }, [jobId])
@@ -69,21 +68,6 @@ export function JobDetailPage({ jobId, onClose }: JobDetailPageProps) {
       await loadJob()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Assignment failed')
-    }
-  }
-
-  const handleReturnToStage = async (stageId: number) => {
-    setError('')
-    try {
-      const result = await request<{ message: string; job: Job }>(`/jobs/${jobId}/return-to-stage`, {
-        method: 'POST',
-        body: JSON.stringify({ stage_id: stageId, notes }),
-      })
-      setJob(result.job)
-      setNotes('')
-      await loadAllowedTransitions()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Return failed')
     }
   }
 
@@ -147,7 +131,6 @@ export function JobDetailPage({ jobId, onClose }: JobDetailPageProps) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 20, overflow: 'auto', padding: '4px 0' }}>
             {workflowStages.map((stage, idx) => {
               const isCurrent = stage.id === currentStageId
-              const isPast = stageTracking.some((st) => st.stage_id === stage.id && st.exited_at)
               const isCompleted = stageTracking.some((st) => st.stage_id === stage.id && st.exited_at)
               return (
                 <div key={stage.id} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>

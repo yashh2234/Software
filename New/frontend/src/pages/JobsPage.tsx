@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react'
-import { Briefcase, Circle, ArrowRight, Clock, AlertTriangle, User, Filter } from 'lucide-react'
+import { Briefcase, Circle, Clock, User, Filter } from 'lucide-react'
 import { DataTable } from '../components/DataTable'
 import { request } from '../lib/api'
 import type { Job } from '../lib/types'

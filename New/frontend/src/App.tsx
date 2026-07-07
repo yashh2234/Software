@@ -23,6 +23,11 @@ import { PermissionsPage } from './pages/PermissionsPage'
 import { DocumentLibraryPage } from './pages/DocumentLibraryPage'
 import { ClientsPage } from './pages/ClientsPage'
 import { AnalyticsPage } from './pages/AnalyticsPage'
+import InquiriesPage from './pages/InquiriesPage'
+import QuotationsPage from './pages/QuotationsPage'
+import WorkOrdersPage from './pages/WorkOrdersPage'
+import DispatchPage from './pages/DispatchPage'
+import OutsourcePage from './pages/OutsourcePage'
 import { AppShell } from './components/AppShell'
 import { useState } from 'react'
 import type { ModuleKey } from './lib/types'
@@ -37,6 +42,9 @@ function AuthenticatedApp() {
     { key: 'roles', label: 'Roles' },
     { key: 'permissions', label: 'Permissions' },
     { key: 'clients', label: 'Clients' },
+    { key: 'inquiries', label: 'Inquiries' },
+    { key: 'quotations', label: 'Quotations' },
+    { key: 'work_orders', label: 'Work Orders' },
     { key: 'registrations', label: 'Registration' },
     { key: 'billing', label: 'Billing' },
     { key: 'invoices', label: 'Invoices' },
@@ -45,6 +53,8 @@ function AuthenticatedApp() {
     { key: 'purchase_orders', label: 'Purchase Orders' },
     { key: 'due_reports', label: 'Due Reports' },
     { key: 'final_reports', label: 'Final Reports' },
+    { key: 'dispatches', label: 'Dispatch' },
+    { key: 'outsource', label: 'Outsource' },
     { key: 'ulr_links', label: 'ULR Links' },
     { key: 'stores', label: 'Stores' },
     { key: 'analytics', label: 'Analytics' },
@@ -74,6 +84,15 @@ function AuthenticatedApp() {
       <div className={`view ${activeModule === 'clients' ? 'visible' : ''}`}>
         {activeModule === 'clients' && <ClientsPage />}
       </div>
+      <div className={`view ${activeModule === 'inquiries' ? 'visible' : ''}`}>
+        {activeModule === 'inquiries' && <InquiriesPage />}
+      </div>
+      <div className={`view ${activeModule === 'quotations' ? 'visible' : ''}`}>
+        {activeModule === 'quotations' && <QuotationsPage />}
+      </div>
+      <div className={`view ${activeModule === 'work_orders' ? 'visible' : ''}`}>
+        {activeModule === 'work_orders' && <WorkOrdersPage />}
+      </div>
       <div className={`view ${activeModule === 'registrations' ? 'visible' : ''}`}>
         {activeModule === 'registrations' && <RegistrationsPage />}
       </div>
@@ -97,6 +116,12 @@ function AuthenticatedApp() {
       </div>
       <div className={`view ${activeModule === 'final_reports' ? 'visible' : ''}`}>
         {activeModule === 'final_reports' && <FinalReportsPage />}
+      </div>
+      <div className={`view ${activeModule === 'dispatches' ? 'visible' : ''}`}>
+        {activeModule === 'dispatches' && <DispatchPage />}
+      </div>
+      <div className={`view ${activeModule === 'outsource' ? 'visible' : ''}`}>
+        {activeModule === 'outsource' && <OutsourcePage />}
       </div>
       <div className={`view ${activeModule === 'ulr_links' ? 'visible' : ''}`}>
         {activeModule === 'ulr_links' && <UlrLinkPage />}

@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, type FormEvent, type ReactNode } from 'react'
-import { Folder, File, Upload, Search, Trash2, Download, Eye, Plus, X, ChevronRight, ChevronDown, Clock, Tag } from 'lucide-react'
+import { Folder, File, Upload, Search, Trash2, Download, Eye, X, ChevronRight, ChevronDown } from 'lucide-react'
 import { request } from '../lib/api'
 import { DataTable } from '../components/DataTable'
-import type { ModuleKey } from '../lib/types'
 
 interface CategoryNode {
   id: number

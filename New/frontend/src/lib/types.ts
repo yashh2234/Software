@@ -270,7 +270,7 @@ export interface PurchaseOrderListItem {
   set_count: number
 }
 
-export type ModuleKey = 'dashboard' | 'lab' | 'users' | 'roles' | 'permissions' | 'clients' | 'registrations' | 'billing' | 'reports' | 'expenses' | 'purchase_orders' | 'invoices' | 'due_reports' | 'final_reports' | 'ulr_links' | 'stores' | 'settings' | 'audit' | 'user_tracking' | 'analytics' | 'workflow_templates' | 'jobs' | 'documents'
+export type ModuleKey = 'dashboard' | 'lab' | 'users' | 'roles' | 'permissions' | 'clients' | 'inquiries' | 'quotations' | 'work_orders' | 'registrations' | 'billing' | 'reports' | 'expenses' | 'purchase_orders' | 'invoices' | 'due_reports' | 'final_reports' | 'dispatches' | 'outsource' | 'ulr_links' | 'stores' | 'settings' | 'audit' | 'user_tracking' | 'analytics' | 'workflow_templates' | 'jobs' | 'documents'
 
 export interface WorkflowTemplate {
   id: number

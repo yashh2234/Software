@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent, type ReactNode } from 'react'
-import { Building2, Plus, Search, Phone, Mail, MapPin, User, MessageSquare, Calendar, ChevronRight, Clock, X, Trash2, Edit3, Users, FileText, IndianRupee } from 'lucide-react'
+import { Building2, Plus, Phone, Mail, MapPin, User, MessageSquare, ChevronRight, X, Trash2, Edit3, Users, FileText } from 'lucide-react'
 import { request } from '../lib/api'
 import { DataTable } from '../components/DataTable'
 

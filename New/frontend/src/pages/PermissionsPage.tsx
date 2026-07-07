@@ -8,12 +8,6 @@ interface PermissionGroup {
   permissions: Array<{ id: number; name: string; action: string; description: string }>
 }
 
-interface RolePermissionData {
-  id: number
-  name: string
-  assigned: boolean
-}
-
 export function PermissionsPage() {
   const [groups, setGroups] = useState<PermissionGroup[]>([])
   const [roles, setRoles] = useState<RoleSummary[]>([])

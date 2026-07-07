@@ -1,10 +1,10 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { Settings, Plus, Trash2, Edit3, ArrowRight, Circle, Check, X } from 'lucide-react'
+import { Settings, Plus, Trash2, Edit3, ArrowRight, Circle, X } from 'lucide-react'
 import { request } from '../lib/api'
 import type { WorkflowTemplate, WorkflowStage, WorkflowTransition } from '../lib/types'
 
 const emptyTemplate = { name: '', description: '', is_active: true }
-const emptyStage = { name: '', slug: '', sort_order: 0, sla_hours: null, is_start: false, is_end: false, color: '#6b7280' }
+const emptyStage: { name: string; slug: string; sort_order: number; sla_hours: number | null; is_start: boolean; is_end: boolean; color: string } = { name: '', slug: '', sort_order: 0, sla_hours: null, is_start: false, is_end: false, color: '#6b7280' }
 const emptyTransition = { from_stage_id: 0, to_stage_id: 0, name: '', requires_approval: false }
 
 export function WorkflowTemplatesPage() {

@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\Dispatch;
+use Illuminate\Http\Request;
+
+class DispatchController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = Dispatch::with(['workOrder', 'dispatchedByUser']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('work_order_id')) {
+            $query->where('work_order_id', $request->work_order_id);
+        }
+        if ($request->filled('registration_id')) {
+            $query->where('registration_id', $request->registration_id);
+        }
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('tracking_number', 'like', "%{$search}%")
+                  ->orWhere('recipient_name', 'like', "%{$search}%")
+                  ->orWhere('courier_name', 'like', "%{$search}%");
+            });
+        }
+        if ($request->filled('date_from')) {
+            $query->where('dispatch_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->where('dispatch_date', '<=', $request->date_to);
+        }
+
+        $dispatches = $query->orderByDesc('id')->paginate($request->get('per_page', 25));
+        return response()->json($dispatches);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'report_id' => 'nullable|integer',
+            'work_order_id' => 'nullable|integer',
+            'registration_id' => 'nullable|integer',
+            'dispatch_date' => 'required|date',
+            'dispatch_method' => 'required|in:courier,hand_delivery,email,post',
+            'courier_name' => 'nullable|string|max:222',
+            'tracking_number' => 'nullable|string|max:222',
+            'recipient_name' => 'nullable|string|max:222',
+            'recipient_address' => 'nullable|string',
+            'notes' => 'nullable|string',
+        ]);
+
+        $validated['status'] = 'dispatched';
+        $validated['dispatched_by'] = auth()->id();
+
+        $dispatch = Dispatch::create($validated);
+
+        return response()->json($dispatch->load('workOrder'), 201);
+    }
+
+    public function show(Dispatch $dispatch)
+    {
+        return response()->json($dispatch->load(['workOrder', 'dispatchedByUser']));
+    }
+
+    public function update(Request $request, Dispatch $dispatch)
+    {
+        $validated = $request->validate([
+            'dispatch_date' => 'sometimes|date',
+            'dispatch_method' => 'sometimes|in:courier,hand_delivery,email,post',
+            'courier_name' => 'nullable|string|max:222',
+            'tracking_number' => 'nullable|string|max:222',
+            'recipient_name' => 'nullable|string|max:222',
+            'recipient_address' => 'nullable|string',
+            'received_by' => 'nullable|string|max:222',
+            'received_at' => 'nullable|date',
+            'status' => 'sometimes|in:pending,dispatched,delivered,returned',
+            'notes' => 'nullable|string',
+        ]);
+
+        $dispatch->update($validated);
+        return response()->json($dispatch);
+    }
+
+    public function destroy(Dispatch $dispatch)
+    {
+        $dispatch->delete();
+        return response()->json(['message' => 'Dispatch deleted']);
+    }
+}

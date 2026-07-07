@@ -60,7 +60,7 @@ export function AnalyticsPage() {
   }
   if (!data) return <div className="error-banner">Failed to load analytics</div>
 
-  const { overview, revenue, tests, turnaround, productivity, clients, delays } = data
+  const { overview, revenue, tests, turnaround, productivity, clients } = data
 
   const tabs = [
     { key: 'overview', label: 'Overview', icon: BarChart3 },
