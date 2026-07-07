@@ -33,6 +33,18 @@ use App\Http\Controllers\Api\QuotationController;
 use App\Http\Controllers\Api\WorkOrderController;
 use App\Http\Controllers\Api\DispatchController;
 use App\Http\Controllers\Api\OutsourceAssignmentController;
+use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\DesignationController;
+use App\Http\Controllers\Api\TestCategoryController;
+use App\Http\Controllers\Api\TestController;
+use App\Http\Controllers\Api\TestStandardController;
+use App\Http\Controllers\Api\TestMethodController;
+use App\Http\Controllers\Api\VendorController;
+use App\Http\Controllers\Api\VendorContactController;
+use App\Http\Controllers\Api\VendorServiceController;
+use App\Http\Controllers\Api\TechnicalReviewController;
+use App\Http\Controllers\Api\ClientDocumentController;
+use App\Http\Controllers\Api\ClientManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', function () {
@@ -215,9 +227,58 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('{client}/communications', [ClientController::class, 'communications']);
     });
 
-    Route::prefix('analytics')->group(function (): void {
-        Route::get('summary', [AnalyticsController::class, 'summary']);
-        Route::get('export/{type}', [AnalyticsController::class, 'exportCsv']);
+    Route::prefix('departments')->group(function (): void {
+        Route::get('/', [DepartmentController::class, 'index']); Route::post('/', [DepartmentController::class, 'store']);
+        Route::get('list', [DepartmentController::class, 'list']); Route::get('{department}', [DepartmentController::class, 'show']);
+        Route::put('{department}', [DepartmentController::class, 'update']); Route::delete('{department}', [DepartmentController::class, 'destroy']);
+    });
+    Route::prefix('designations')->group(function (): void {
+        Route::get('/', [DesignationController::class, 'index']); Route::post('/', [DesignationController::class, 'store']);
+        Route::get('list', [DesignationController::class, 'list']); Route::get('{designation}', [DesignationController::class, 'show']);
+        Route::put('{designation}', [DesignationController::class, 'update']); Route::delete('{designation}', [DesignationController::class, 'destroy']);
+    });
+    Route::prefix('test-categories')->group(function (): void {
+        Route::get('/', [TestCategoryController::class, 'index']); Route::post('/', [TestCategoryController::class, 'store']);
+        Route::get('list', [TestCategoryController::class, 'list']); Route::get('{testCategory}', [TestCategoryController::class, 'show']);
+        Route::put('{testCategory}', [TestCategoryController::class, 'update']); Route::delete('{testCategory}', [TestCategoryController::class, 'destroy']);
+    });
+    Route::prefix('tests')->group(function (): void {
+        Route::get('/', [TestController::class, 'index']); Route::post('/', [TestController::class, 'store']);
+        Route::get('list', [TestController::class, 'list']); Route::get('{test}', [TestController::class, 'show']);
+        Route::put('{test}', [TestController::class, 'update']); Route::delete('{test}', [TestController::class, 'destroy']);
+    });
+    Route::prefix('test-standards')->group(function (): void {
+        Route::get('/', [TestStandardController::class, 'index']); Route::post('/', [TestStandardController::class, 'store']);
+        Route::put('{testStandard}', [TestStandardController::class, 'update']); Route::delete('{testStandard}', [TestStandardController::class, 'destroy']);
+    });
+    Route::prefix('test-methods')->group(function (): void {
+        Route::get('/', [TestMethodController::class, 'index']); Route::post('/', [TestMethodController::class, 'store']);
+        Route::put('{testMethod}', [TestMethodController::class, 'update']); Route::delete('{testMethod}', [TestMethodController::class, 'destroy']);
+    });
+    Route::prefix('vendors')->group(function (): void {
+        Route::get('/', [VendorController::class, 'index']); Route::post('/', [VendorController::class, 'store']);
+        Route::get('list', [VendorController::class, 'list']); Route::get('{vendor}', [VendorController::class, 'show']);
+        Route::put('{vendor}', [VendorController::class, 'update']); Route::delete('{vendor}', [VendorController::class, 'destroy']);
+    });
+    Route::prefix('vendor-contacts')->group(function (): void {
+        Route::get('/', [VendorContactController::class, 'index']); Route::post('/', [VendorContactController::class, 'store']);
+        Route::put('{vendorContact}', [VendorContactController::class, 'update']); Route::delete('{vendorContact}', [VendorContactController::class, 'destroy']);
+    });
+    Route::prefix('vendor-services')->group(function (): void {
+        Route::get('/', [VendorServiceController::class, 'index']); Route::post('/', [VendorServiceController::class, 'store']);
+        Route::put('{vendorService}', [VendorServiceController::class, 'update']); Route::delete('{vendorService}', [VendorServiceController::class, 'destroy']);
+    });
+    Route::prefix('technical-reviews')->group(function (): void {
+        Route::get('/', [TechnicalReviewController::class, 'index']); Route::post('/', [TechnicalReviewController::class, 'store']);
+        Route::get('{technicalReview}', [TechnicalReviewController::class, 'show']);
+        Route::put('{technicalReview}', [TechnicalReviewController::class, 'update']); Route::delete('{technicalReview}', [TechnicalReviewController::class, 'destroy']);
+    });
+    Route::prefix('client-documents')->group(function (): void {
+        Route::get('/', [ClientDocumentController::class, 'index']); Route::post('/', [ClientDocumentController::class, 'store']);
+        Route::delete('{clientDocument}', [ClientDocumentController::class, 'destroy']);
+    });
+    Route::prefix('client-management')->group(function (): void {
+        Route::put('{client}/addresses', [ClientManagementController::class, 'updateAddresses']);
     });
 
     Route::prefix('inquiries')->group(function (): void {
@@ -261,5 +322,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('{outsourceAssignment}', [OutsourceAssignmentController::class, 'show']);
         Route::put('{outsourceAssignment}', [OutsourceAssignmentController::class, 'update']);
         Route::delete('{outsourceAssignment}', [OutsourceAssignmentController::class, 'destroy']);
+    });
+
+    Route::prefix('analytics')->group(function (): void {
+        Route::get('summary', [AnalyticsController::class, 'summary']);
+        Route::get('export/{type}', [AnalyticsController::class, 'exportCsv']);
     });
 });
