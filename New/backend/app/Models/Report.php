@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Report extends Model
 {
@@ -10,11 +11,11 @@ class Report extends Model
     protected $primaryKey = 'iReportId';
 
     public $incrementing = false;
-
     public $timestamps = false;
 
     protected $fillable = [
         'iReportId',
+        'job_id',
         'uid_no',
         'ulr_no',
         'customer_details',
@@ -30,6 +31,7 @@ class Report extends Model
         'environment_condition',
         'report_type',
         'status',
+        'workflow_status',
         'cancel_remark',
         'user_id',
         'updated_by',
@@ -39,8 +41,11 @@ class Report extends Model
         'assigned_at',
         'testing_started_at',
         'report_generated_at',
+        'submitted_at',
         'approved_at',
         'approved_by',
+        'locked_at',
+        'locked_by',
     ];
 
     protected $casts = [
@@ -49,10 +54,41 @@ class Report extends Model
         'dispatch_date' => 'date',
         'create_date' => 'datetime',
         'updated_date' => 'datetime',
+        'assigned_at' => 'datetime',
+        'testing_started_at' => 'datetime',
+        'report_generated_at' => 'datetime',
+        'submitted_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'locked_at' => 'datetime',
     ];
+
+    public function job(): BelongsTo
+    {
+        return $this->belongsTo(Jobs::class, 'job_id');
+    }
 
     public function cubeReport()
     {
         return $this->hasMany(CubeReport::class, 'iReportId', 'iReportId');
+    }
+
+    public function technicalReviews()
+    {
+        return $this->hasMany(TechnicalReview::class, 'report_id', 'iReportId');
+    }
+
+    public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function approvedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function lockedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'locked_by');
     }
 }

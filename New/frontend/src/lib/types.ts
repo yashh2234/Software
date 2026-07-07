@@ -356,6 +356,7 @@ export interface Job {
   timeline?: JobTimelineEntry[]
   stage_tracking?: JobStageTracking[]
   samples?: Sample[]
+  assignments?: JobAssignment[]
 }
 
 export interface JobTimelineEntry {
@@ -371,6 +372,74 @@ export interface JobTimelineEntry {
   user?: { id: number; name: string } | null
   from_stage?: WorkflowStage | null
   to_stage?: WorkflowStage | null
+}
+
+export interface Inquiry {
+  id: number
+  inquiry_no: string
+  client_name: string
+  agency_name: string | null
+  mobile_no: string | null
+  email: string | null
+  inquiry_type: string
+  scope_of_work: string | null
+  priority: string
+  status: string
+  notes: string | null
+  received_date: string
+  assigned_to: number | null
+  created_by: number | null
+  created_at: string | null
+}
+
+export interface Quotation {
+  id: number
+  quotation_no: string
+  client_name: string
+  agency_name: string | null
+  contact_person: string | null
+  mobile_no: string | null
+  email: string | null
+  valid_until: string | null
+  total_amount: number | null
+  status: string
+  notes: string | null
+  created_by: number | null
+  created_at: string | null
+}
+
+export interface WorkOrder {
+  id: number
+  work_order_no: string
+  client_name: string
+  agency_name: string | null
+  scope_of_work: string | null
+  due_date: string | null
+  total_amount: number | null
+  status: string
+  notes: string | null
+  created_by: number | null
+  created_at: string | null
+}
+
+export interface JobAssignment {
+  id: number
+  job_id: number
+  department_id: number | null
+  assigned_to: number | null
+  assigned_by: number | null
+  assignment_type: 'internal' | 'outsource'
+  vendor_id: number | null
+  priority: string
+  due_date: string | null
+  started_at: string | null
+  completed_at: string | null
+  status: string
+  notes: string | null
+  created_at: string | null
+  department?: { id: number; name: string } | null
+  assigned_user?: { id: number; name: string } | null
+  vendor?: { id: number; vendor_name: string } | null
 }
 
 export interface JobStageTracking {

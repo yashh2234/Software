@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\InvoiceList;
+use App\Models\Jobs;
 use App\Models\UserActivity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -236,6 +237,17 @@ class InvoiceController extends Controller
         ]);
 
         return response()->json(['message' => 'Invoice deleted']);
+    }
+
+    public function jobInvoices(Jobs $job): JsonResponse
+    {
+        $invoices = Invoice::query()
+            ->where('work_order_no', $job->uid_no)
+            ->with('items')
+            ->orderByDesc('iInvoiceId')
+            ->get();
+
+        return response()->json(['data' => $invoices]);
     }
 
     public function printInvoice(int $id): JsonResponse

@@ -310,7 +310,7 @@ export function ReportsPage() {
                   <div>
                     <strong>{report.uid_no}</strong>
                     <span>{report.agency_name}</span>
-                    <small>{report.material_details ?? 'N/A'} | {report.create_date ?? '-'}</small>
+                    <small>{(report as any).job_id ? `Job #${(report as any).job_id} | ` : ''}{report.material_details ?? 'N/A'} | {report.create_date ?? '-'}</small>
                   </div>
                   <div className="row-actions">
                     <span

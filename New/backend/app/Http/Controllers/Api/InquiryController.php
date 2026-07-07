@@ -4,10 +4,21 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inquiry;
+use App\Models\Jobs;
+use App\Models\WorkflowTemplate;
+use App\Models\WorkflowStage;
+use App\Services\WorkflowEngine;
 use Illuminate\Http\Request;
 
 class InquiryController extends Controller
 {
+    protected WorkflowEngine $workflowEngine;
+
+    public function __construct(WorkflowEngine $workflowEngine)
+    {
+        $this->workflowEngine = $workflowEngine;
+    }
+
     public function index(Request $request)
     {
         $query = Inquiry::with(['assignedUser', 'createdByUser']);
@@ -62,6 +73,9 @@ class InquiryController extends Controller
 
         $inquiry = Inquiry::create($validated);
 
+        // Create a linked job at Inquiry stage
+        $this->createJobFromInquiry($inquiry, $request);
+
         return response()->json($inquiry->load(['assignedUser', 'createdByUser']), 201);
     }
 
@@ -105,6 +119,60 @@ class InquiryController extends Controller
     public function convertToQuotation(Inquiry $inquiry)
     {
         $inquiry->update(['status' => 'quoted']);
-        return response()->json($inquiry);
+
+        // Move linked job to Quotation stage
+        $job = Jobs::where('uid_no', $inquiry->inquiry_no)->first();
+        if ($job) {
+            $quotationStage = WorkflowStage::whereHas('template', fn ($q) => $q->where('slug', 'standard-lab-workflow'))
+                ->where('slug', 'quotation')->first();
+            if ($quotationStage && $quotationStage->id !== $job->current_stage_id) {
+                $transition = \App\Models\WorkflowTransition::where('template_id', $job->workflow_template_id)
+                    ->where('from_stage_id', $job->current_stage_id)
+                    ->where('to_stage_id', $quotationStage->id)
+                    ->first();
+                if ($transition) {
+                    $this->workflowEngine->transition($job, $transition, auth()->user(), 'Converted from inquiry');
+                }
+            }
+        }
+
+        return response()->json($inquiry->fresh());
+    }
+
+    protected function createJobFromInquiry(Inquiry $inquiry, Request $request): void
+    {
+        $template = WorkflowTemplate::where('is_active', true)->first();
+        if (!$template) return;
+
+        $existingJob = Jobs::where('uid_no', $inquiry->inquiry_no)->first();
+        if ($existingJob) return;
+
+        $job = Jobs::create([
+            'uid_no' => $inquiry->inquiry_no,
+            'title' => $inquiry->client_name . ($inquiry->scope_of_work ? ' - ' . $inquiry->scope_of_work : ''),
+            'description' => $inquiry->notes,
+            'priority' => $inquiry->priority,
+            'workflow_template_id' => $template->id,
+            'assigned_to' => $inquiry->assigned_to,
+            'created_by' => auth()->id(),
+            'status' => 'pending',
+        ]);
+
+        // Move through stages to reach Inquiry
+        $inquiryStage = WorkflowStage::where('template_id', $template->id)
+            ->where('slug', 'inquiry')->first();
+        if ($inquiryStage) {
+            $this->workflowEngine->startJob($job, auth()->user());
+
+            if ($job->current_stage_id !== $inquiryStage->id) {
+                $transition = \App\Models\WorkflowTransition::where('template_id', $template->id)
+                    ->where('from_stage_id', $job->current_stage_id)
+                    ->where('to_stage_id', $inquiryStage->id)
+                    ->first();
+                if ($transition) {
+                    $this->workflowEngine->transition($job, $transition, auth()->user(), 'Inquiry created');
+                }
+            }
+        }
     }
 }

@@ -157,6 +157,7 @@ class ReportController extends Controller
             ->map(fn (Report $report): array => [
                 'iReportId' => $report->iReportId,
                 'uid_no' => $report->uid_no,
+                'job_id' => $report->job_id,
                 'create_date' => optional($report->create_date)->format('d M Y'),
                 'customer_details' => $report->customer_details,
                 'agency_name' => $report->agency_name,

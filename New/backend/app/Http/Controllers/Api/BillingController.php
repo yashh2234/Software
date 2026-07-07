@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Billing;
+use App\Models\Jobs;
 use App\Models\Registration;
 use App\Models\SmsReminderLog;
 use Illuminate\Http\JsonResponse;
@@ -183,6 +184,15 @@ class BillingController extends Controller
         $billing->delete();
 
         return response()->json(['message' => 'Billing record deleted']);
+    }
+
+    public function jobBilling(Jobs $job): JsonResponse
+    {
+        $billing = Billing::where('uid_no', $job->uid_no)
+            ->orderByDesc('id')
+            ->get();
+
+        return response()->json(['data' => $billing]);
     }
 
     public function updateRegistration(Request $request, $id): JsonResponse

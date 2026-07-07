@@ -3,11 +3,22 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Jobs;
 use App\Models\WorkOrder;
+use App\Models\WorkflowTemplate;
+use App\Models\WorkflowStage;
+use App\Services\WorkflowEngine;
 use Illuminate\Http\Request;
 
 class WorkOrderController extends Controller
 {
+    protected WorkflowEngine $workflowEngine;
+
+    public function __construct(WorkflowEngine $workflowEngine)
+    {
+        $this->workflowEngine = $workflowEngine;
+    }
+
     public function index(Request $request)
     {
         $query = WorkOrder::with(['inquiry', 'quotation', 'registration', 'outsourceAssignments']);
@@ -64,6 +75,9 @@ class WorkOrderController extends Controller
 
         $workOrder = WorkOrder::create($validated);
 
+        // Create or update linked job at Work Order stage
+        $this->syncJobFromWorkOrder($workOrder, $request);
+
         return response()->json($workOrder->load(['inquiry', 'quotation', 'registration']), 201);
     }
 
@@ -111,5 +125,62 @@ class WorkOrderController extends Controller
     public function printDiv(WorkOrder $workOrder)
     {
         return response()->json($workOrder->load(['inquiry', 'quotation', 'registration', 'outsourceAssignments']));
+    }
+
+    protected function syncJobFromWorkOrder(WorkOrder $workOrder, Request $request): void
+    {
+        $template = WorkflowTemplate::where('is_active', true)->first();
+        if (!$template) return;
+
+        $existingJob = Jobs::where('uid_no', $workOrder->work_order_no)->first();
+        if ($existingJob) {
+            // Update existing job
+            $existingJob->update([
+                'title' => $workOrder->client_name . ' - ' . ($workOrder->scope_of_work ?? ''),
+                'due_at' => $workOrder->due_date,
+                'priority' => 'normal',
+            ]);
+
+            // Move to Work Order stage if not already there
+            $woStage = WorkflowStage::where('template_id', $template->id)
+                ->where('slug', 'work-order')->first();
+            if ($woStage && $existingJob->current_stage_id !== $woStage->id) {
+                $transition = \App\Models\WorkflowTransition::where('template_id', $template->id)
+                    ->where('from_stage_id', $existingJob->current_stage_id)
+                    ->where('to_stage_id', $woStage->id)
+                    ->first();
+                if ($transition) {
+                    $this->workflowEngine->transition($existingJob, $transition, auth()->user(), 'Work order created');
+                }
+            }
+            return;
+        }
+
+        // Create new job
+        $job = Jobs::create([
+            'uid_no' => $workOrder->work_order_no,
+            'title' => $workOrder->client_name . ($workOrder->scope_of_work ? ' - ' . $workOrder->scope_of_work : ''),
+            'description' => $workOrder->notes,
+            'priority' => 'normal',
+            'workflow_template_id' => $template->id,
+            'created_by' => auth()->id(),
+            'due_at' => $workOrder->due_date,
+            'status' => 'pending',
+        ]);
+
+        $this->workflowEngine->startJob($job, auth()->user());
+
+        // Move to Work Order stage
+        $woStage = WorkflowStage::where('template_id', $template->id)
+            ->where('slug', 'work-order')->first();
+        if ($woStage && $job->current_stage_id !== $woStage->id) {
+            $transition = \App\Models\WorkflowTransition::where('template_id', $template->id)
+                ->where('from_stage_id', $job->current_stage_id)
+                ->where('to_stage_id', $woStage->id)
+                ->first();
+            if ($transition) {
+                $this->workflowEngine->transition($job, $transition, auth()->user(), 'Work order created');
+            }
+        }
     }
 }

@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\WorkflowTemplateController;
 use App\Http\Controllers\Api\WorkflowStageController;
 use App\Http\Controllers\Api\WorkflowTransitionController;
 use App\Http\Controllers\Api\JobController;
+use App\Http\Controllers\Api\JobAssignmentController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\DocumentCategoryController;
 use App\Http\Controllers\Api\DocumentController;
@@ -43,6 +44,9 @@ use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Api\VendorContactController;
 use App\Http\Controllers\Api\VendorServiceController;
 use App\Http\Controllers\Api\TechnicalReviewController;
+use App\Http\Controllers\Api\ReportWorkflowController;
+use App\Http\Controllers\Api\SampleController;
+use App\Http\Controllers\Api\TestResultController;
 use App\Http\Controllers\Api\ClientDocumentController;
 use App\Http\Controllers\Api\ClientManagementController;
 use Illuminate\Support\Facades\Route;
@@ -179,6 +183,34 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::post('{job}/assign', [JobController::class, 'assign']);
         Route::post('{job}/cancel', [JobController::class, 'cancel']);
         Route::get('{job}/timeline', [JobController::class, 'timeline']);
+        Route::get('{job}/assignments', [JobAssignmentController::class, 'index']);
+        Route::post('{job}/assignments', [JobAssignmentController::class, 'store']);
+        Route::put('assignments/{jobAssignment}', [JobAssignmentController::class, 'update']);
+        Route::delete('assignments/{jobAssignment}', [JobAssignmentController::class, 'destroy']);
+        Route::get('{job}/reports', [ReportWorkflowController::class, 'jobReports']);
+        Route::post('{job}/reports/draft', [ReportWorkflowController::class, 'createDraft']);
+        Route::get('{job}/samples', [SampleController::class, 'index']);
+        Route::post('{job}/samples', [SampleController::class, 'store']);
+        Route::get('{job}/billing', [BillingController::class, 'jobBilling']);
+        Route::get('{job}/invoices', [InvoiceController::class, 'jobInvoices']);
+        Route::get('{job}/dispatches', [DispatchController::class, 'jobDispatches']);
+        Route::get('{job}/test-results', [TestResultController::class, 'index']);
+        Route::post('{job}/test-results', [TestResultController::class, 'store']);
+        Route::post('{job}/test-results/batch', [TestResultController::class, 'batchStore']);
+    });
+
+    Route::put('samples/{sample}', [SampleController::class, 'update']);
+    Route::delete('samples/{sample}', [SampleController::class, 'destroy']);
+    Route::put('test-results/{testResult}', [TestResultController::class, 'update']);
+    Route::delete('test-results/{testResult}', [TestResultController::class, 'destroy']);
+
+    Route::prefix('report-workflow')->group(function (): void {
+        Route::post('{report}/observations', [ReportWorkflowController::class, 'saveObservations']);
+        Route::post('{report}/submit', [ReportWorkflowController::class, 'submitForReview']);
+        Route::post('{report}/approve', [ReportWorkflowController::class, 'approve']);
+        Route::post('{report}/request-correction', [ReportWorkflowController::class, 'requestCorrection']);
+        Route::post('{report}/lock', [ReportWorkflowController::class, 'lock']);
+        Route::get('{report}/review-history', [ReportWorkflowController::class, 'reviewHistory']);
     });
 
     Route::prefix('permissions')->middleware('permission:manage_permissions')->group(function (): void {

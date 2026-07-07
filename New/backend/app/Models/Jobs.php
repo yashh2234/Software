@@ -93,4 +93,29 @@ class Jobs extends Model
     {
         return $this->belongsTo(Client::class, 'client_id');
     }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(JobAssignment::class, 'job_id');
+    }
+
+    public function testResults(): HasMany
+    {
+        return $this->hasMany(TestResult::class, 'job_id');
+    }
+
+    public function inquiry(): BelongsTo
+    {
+        return $this->belongsTo(Inquiry::class, 'uid_no', 'inquiry_no');
+    }
+
+    public function quotation(): BelongsTo
+    {
+        return $this->belongsTo(Quotation::class, 'uid_no', 'quotation_no');
+    }
+
+    public function workOrder(): BelongsTo
+    {
+        return $this->belongsTo(WorkOrder::class, 'uid_no', 'work_order_no');
+    }
 }

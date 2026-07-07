@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Dispatch;
+use App\Models\Jobs;
+use App\Models\WorkOrder;
 use Illuminate\Http\Request;
 
 class DispatchController extends Controller
@@ -85,6 +87,24 @@ class DispatchController extends Controller
 
         $dispatch->update($validated);
         return response()->json($dispatch);
+    }
+
+    public function jobDispatches(Jobs $job)
+    {
+        $workOrderIds = WorkOrder::where('work_order_no', $job->uid_no)->pluck('id');
+        $registrationId = $job->registration?->id;
+
+        $dispatches = Dispatch::with(['workOrder', 'dispatchedByUser'])
+            ->where(function ($q) use ($workOrderIds, $registrationId) {
+                $q->whereIn('work_order_id', $workOrderIds);
+                if ($registrationId) {
+                    $q->orWhere('registration_id', $registrationId);
+                }
+            })
+            ->orderByDesc('id')
+            ->get();
+
+        return response()->json(['data' => $dispatches]);
     }
 
     public function destroy(Dispatch $dispatch)

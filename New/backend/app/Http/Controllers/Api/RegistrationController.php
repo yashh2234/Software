@@ -3,10 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs as JobsModel;
 use App\Models\AuditLog;
 use App\Models\Registration;
 use App\Models\Report;
 use App\Models\UserActivity;
+use App\Models\WorkflowStage;
+use App\Models\WorkflowTemplate;
+use App\Models\WorkflowTransition;
+use App\Services\WorkflowEngine;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -165,6 +170,8 @@ class RegistrationController extends Controller
             'created_at' => now(),
         ]);
 
+        $this->syncJobFromRegistration($registration->uid_no, $request);
+
         return response()->json([
             'message' => 'Registration created successfully',
             'registration' => $this->presentRegistration($registration),
@@ -226,6 +233,8 @@ class RegistrationController extends Controller
         $registration = DB::table('client_registration')->where('iClientId', $registrationId)->first();
 
         abort_if(! $registration, 404, 'Registration not found');
+
+        $this->syncJobFromRegistration($registration->uid_no, $request);
 
         return response()->json([
             'message' => 'Registration updated successfully',
@@ -376,6 +385,55 @@ class RegistrationController extends Controller
             'path' => $path,
             'url' => asset("storage/$path"),
         ]);
+    }
+
+    protected function syncJobFromRegistration(string $uidNo, Request $request): void
+    {
+        $template = WorkflowTemplate::where('is_active', true)->first();
+        if (!$template) return;
+
+        $existingJob = JobsModel::where('uid_no', $uidNo)->first();
+        if ($existingJob) {
+            $regStage = WorkflowStage::where('template_id', $template->id)
+                ->where('slug', 'registration')->first();
+            if ($regStage && $existingJob->current_stage_id !== $regStage->id) {
+                $transition = WorkflowTransition::where('template_id', $template->id)
+                    ->where('from_stage_id', $existingJob->current_stage_id)
+                    ->where('to_stage_id', $regStage->id)
+                    ->first();
+                if ($transition) {
+                    app(WorkflowEngine::class)->transition(
+                        $existingJob, $transition, $request->user(), 'Sample registered'
+                    );
+                }
+            }
+            return;
+        }
+
+        $job = JobsModel::create([
+            'uid_no' => $uidNo,
+            'title' => 'Registration ' . $uidNo,
+            'priority' => 'normal',
+            'workflow_template_id' => $template->id,
+            'created_by' => $request->user()?->id,
+            'status' => 'pending',
+        ]);
+
+        app(WorkflowEngine::class)->startJob($job, $request->user());
+
+        $regStage = WorkflowStage::where('template_id', $template->id)
+            ->where('slug', 'registration')->first();
+        if ($regStage && $job->current_stage_id !== $regStage->id) {
+            $transition = WorkflowTransition::where('template_id', $template->id)
+                ->where('from_stage_id', $job->current_stage_id)
+                ->where('to_stage_id', $regStage->id)
+                ->first();
+            if ($transition) {
+                app(WorkflowEngine::class)->transition(
+                    $job, $transition, $request->user(), 'Sample registered'
+                );
+            }
+        }
     }
 
     private function normalizeLegacyDate(mixed $value): string
