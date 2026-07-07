@@ -188,9 +188,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::put('assignments/{jobAssignment}', [JobAssignmentController::class, 'update']);
         Route::delete('assignments/{jobAssignment}', [JobAssignmentController::class, 'destroy']);
         Route::get('{job}/reports', [ReportWorkflowController::class, 'jobReports']);
-        Route::post('{job}/reports/draft', [ReportWorkflowController::class, 'createDraft']);
+        Route::post('{job}/reports/draft', [ReportWorkflowController::class, 'createDraft'])->middleware('stage.permission:stage.report-draft');
         Route::get('{job}/samples', [SampleController::class, 'index']);
-        Route::post('{job}/samples', [SampleController::class, 'store']);
+        Route::post('{job}/samples', [SampleController::class, 'store'])->middleware('stage.permission:stage.sample-received');
         Route::get('{job}/billing', [BillingController::class, 'jobBilling']);
         Route::get('{job}/invoices', [InvoiceController::class, 'jobInvoices']);
         Route::get('{job}/dispatches', [DispatchController::class, 'jobDispatches']);
@@ -245,6 +245,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('/', [ClientController::class, 'index']);
         Route::post('/', [ClientController::class, 'store']);
         Route::get('search', [ClientController::class, 'search']);
+        Route::get('list', [ClientController::class, 'list']);
         Route::get('analytics', [ClientController::class, 'analytics']);
         Route::post('migrate', [ClientController::class, 'migrateFromRegistrations']);
         Route::get('{client}', [ClientController::class, 'show']);

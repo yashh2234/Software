@@ -41,6 +41,13 @@ class ClientController extends Controller
         return response()->json($query->orderBy('company_name')->paginate($perPage));
     }
 
+    public function list()
+    {
+        return response()->json(
+            Client::where('is_active', true)->orderBy('company_name')->get(['id', 'company_name', 'mobile', 'email'])
+        );
+    }
+
     public function show(Client $client)
     {
         return response()->json(

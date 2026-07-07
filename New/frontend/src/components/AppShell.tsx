@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Bell, FlaskConical, RefreshCcw, LogOut, LayoutDashboard, Users, ClipboardList, ReceiptText, BarChart3, ShieldCheck, IndianRupee, FileText, Settings, History, Search, Check, Receipt, AlertTriangle, ClipboardCheck, Briefcase, Building2, ChevronDown, ChevronRight, Store, Activity } from 'lucide-react'
+import { Bell, FlaskConical, RefreshCcw, LogOut, LayoutDashboard, Users, ClipboardList, ReceiptText, BarChart3, ShieldCheck, IndianRupee, FileText, Settings, History, Search, Check, Receipt, AlertTriangle, ClipboardCheck, Briefcase, Building2, ChevronDown, ChevronRight, Store, Activity, Filter, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
 import { useTracking } from '../lib/useTracking'
+import { DepartmentSelector } from './ui'
 
 const iconMap: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -78,6 +79,11 @@ export function AppShell({ groups, activeModule, onModuleChange, children }: App
   const [searchResults, setSearchResults] = useState<Array<{ type: string; id: number; uid_no: string; title: string; subtitle: string; mobile: string | null }>>([])
   const [searching, setSearching] = useState(false)
   const [showResults, setShowResults] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filterStage, setFilterStage] = useState('')
+  const [filterDept, setFilterDept] = useState<number | null>(null)
+  const [filterDateFrom, setFilterDateFrom] = useState('')
+  const [filterDateTo, setFilterDateTo] = useState('')
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [unread, setUnread] = useState(0)
   const [showNotifs, setShowNotifs] = useState(false)
@@ -113,7 +119,12 @@ export function AppShell({ groups, activeModule, onModuleChange, children }: App
     if (q.length < 2) { setSearchResults([]); setShowResults(false); return }
     setSearching(true)
     try {
-      const data = await api.search(q)
+      const params = new URLSearchParams({ q })
+      if (filterStage) params.set('stage', filterStage)
+      if (filterDept) params.set('department_id', String(filterDept))
+      if (filterDateFrom) params.set('date_from', filterDateFrom)
+      if (filterDateTo) params.set('date_to', filterDateTo)
+      const data = await api.search(`${q}?${params.toString()}` as any)
       setSearchResults(data.data)
       setShowResults(true)
     } catch {
@@ -121,7 +132,7 @@ export function AppShell({ groups, activeModule, onModuleChange, children }: App
     } finally {
       setSearching(false)
     }
-  }, [])
+  }, [filterStage, filterDept, filterDateFrom, filterDateTo])
 
   const handleSearchInput = (value: string) => {
     setSearchQuery(value)
@@ -218,12 +229,28 @@ export function AppShell({ groups, activeModule, onModuleChange, children }: App
           </div>
           <div className="topbar-actions">
             <div ref={searchRef} style={{ position: 'relative' }}>
-              <div className="search-field" style={{ width: 240 }}>
-                <Search size={16} />
-                <input placeholder="Search UID, agency, mobile..." value={searchQuery} onChange={(e) => handleSearchInput(e.target.value)} onFocus={() => { if (searchResults.length > 0) setShowResults(true) }} />
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <div className="search-field" style={{ width: 200 }}>
+                  <Search size={16} />
+                  <input placeholder="Search UID, agency, mobile..." value={searchQuery} onChange={(e) => handleSearchInput(e.target.value)} onFocus={() => { if (searchResults.length > 0) setShowResults(true) }} />
+                </div>
+                <button className="icon-button" onClick={() => setShowFilters(!showFilters)} type="button" title="Filters" style={{ color: showFilters ? '#195340' : '#65737d' }}>
+                  <Filter size={16} />
+                </button>
               </div>
+
+              {showFilters ? (
+                <div style={{ display: 'flex', gap: 8, padding: '8px 0', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <input value={filterStage} onChange={e => setFilterStage(e.target.value)} placeholder="Stage (e.g. testing)" style={{ width: 120, fontSize: '0.78rem', padding: '4px 8px', borderRadius: 4, border: '1px solid #dfe6ea' }} />
+                  <div style={{ width: 160 }}><DepartmentSelector value={filterDept} onChange={setFilterDept} placeholder="Dept" /></div>
+                  <input type="date" value={filterDateFrom} onChange={e => setFilterDateFrom(e.target.value)} style={{ fontSize: '0.78rem', padding: '4px 8px', borderRadius: 4, border: '1px solid #dfe6ea', width: 130 }} />
+                  <input type="date" value={filterDateTo} onChange={e => setFilterDateTo(e.target.value)} style={{ fontSize: '0.78rem', padding: '4px 8px', borderRadius: 4, border: '1px solid #dfe6ea', width: 130 }} />
+                  <button className="icon-button" onClick={() => { setFilterStage(''); setFilterDept(null); setFilterDateFrom(''); setFilterDateTo('') }} type="button" title="Clear filters"><X size={14} /></button>
+                </div>
+              ) : null}
+
               {showResults ? (
-                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 400, maxHeight: 360, overflowY: 'auto', background: '#fff', border: '1px solid #dfe6ea', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.10)', zIndex: 100 }}>
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 4, width: 420, maxHeight: 400, overflowY: 'auto', background: '#fff', border: '1px solid #dfe6ea', borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.10)', zIndex: 100 }}>
                   {searching ? <p style={{ padding: 16, color: '#65737d', textAlign: 'center' }}>Searching...</p>
                   : searchResults.length === 0 ? <p style={{ padding: 16, color: '#65737d', textAlign: 'center' }}>No results found.</p>
                   : searchResults.map((r) => (

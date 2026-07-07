@@ -8,6 +8,7 @@ import { SampleManager } from '../components/SampleManager'
 import { BillingSection } from '../components/BillingSection'
 import { DispatchSection } from '../components/DispatchSection'
 import { TestResultManager } from '../components/TestResultManager'
+import { DocumentManager } from '../components/DocumentManager'
 
 interface JobDetailPageProps { jobId: number; onBack: () => void }
 
@@ -307,6 +308,10 @@ export function JobDetailPage({ jobId, onBack }: JobDetailPageProps) {
 
           <SectionCard title="Reports" icon={FileText} defaultOpen={true}>
             <ReportWorkflow jobId={jobId} />
+          </SectionCard>
+
+          <SectionCard title="Documents" icon={FileText} defaultOpen={false}>
+            <DocumentManager jobId={jobId} />
           </SectionCard>
 
           <SectionCard title="Billing" icon={CreditCard} defaultOpen={true}>

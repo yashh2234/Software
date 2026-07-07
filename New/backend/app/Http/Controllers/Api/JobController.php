@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Jobs;
-use App\Models\WorkflowTemplate;
+use App\Models\WorkflowStage;
 use App\Models\WorkflowTransition;
 use App\Services\WorkflowEngine;
 use Illuminate\Http\Request;
@@ -142,10 +142,22 @@ class JobController extends Controller
         $transition = WorkflowTransition::with(['fromStage', 'toStage'])
             ->findOrFail($validated['transition_id']);
 
+        $user = $request->user();
+        $targetStage = $transition->toStage;
+
+        if ($targetStage->assigned_role_id && !$user->is_admin && !$user->isLegacyAdmin()) {
+            $userGroupIds = $user->groups()->pluck('group_id')->toArray();
+            if (!in_array((int) $targetStage->assigned_role_id, $userGroupIds, true)) {
+                return response()->json([
+                    'message' => "You do not have the required role to move this job to {$targetStage->name}.",
+                ], 403);
+            }
+        }
+
         $job = $this->workflowEngine->transition(
             $job,
             $transition,
-            $request->user(),
+            $user,
             $validated['notes'] ?? ''
         );
 

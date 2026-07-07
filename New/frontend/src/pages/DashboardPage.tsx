@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ClipboardList, Check, UserCheck, FileText, AlertTriangle, Briefcase, Eye, ThumbsUp, CreditCard, Truck } from 'lucide-react'
+import { ClipboardList, Check, UserCheck, FileText, AlertTriangle, Briefcase, Eye, ThumbsUp, CreditCard, Truck, Plus, FileEdit } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { MetricCard } from '../components/MetricCard'
 import { RegistrationTrendChart, MonthlyRevenueChart, ReportStatusChart } from '../components/Charts'
@@ -158,6 +158,36 @@ export function DashboardPage() {
 
   return (
     <>
+      {/* Quick Actions */}
+      <section className="surface" style={{ marginBottom: '1.25rem' }}>
+        <div className="surface-heading">
+          <div>
+            <p className="section-label">Quick actions</p>
+            <h2>Jump to</h2>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, padding: '0 20px 16px', flexWrap: 'wrap' }}>
+          <button className="ghost-button" onClick={() => window.location.href = '/#jobs'} type="button">
+            <Plus size={16} /> New Job
+          </button>
+          <button className="ghost-button" onClick={() => window.location.href = '/#registrations'} type="button">
+            <FileEdit size={16} /> Continue Draft
+          </button>
+          <button className="ghost-button" onClick={() => window.location.href = '/#reports'} type="button">
+            <Eye size={16} /> View Reviews
+          </button>
+          <button className="ghost-button" onClick={() => window.location.href = '/#inquiries'} type="button">
+            <ClipboardList size={16} /> New Inquiry
+          </button>
+          <button className="ghost-button" onClick={() => window.location.href = '/#billing'} type="button">
+            <CreditCard size={16} /> Pending Billing
+          </button>
+          <button className="ghost-button" onClick={() => window.location.href = '/#dispatches'} type="button">
+            <Truck size={16} /> Pending Dispatch
+          </button>
+        </div>
+      </section>
+
       {/* My Tasks section */}
       {myTasksCard()}
 

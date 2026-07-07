@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'permission' => \App\Http\Middleware\CheckPermission::class,
+            'stage.permission' => \App\Http\Middleware\CheckStagePermission::class,
         ]);
         $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
     })

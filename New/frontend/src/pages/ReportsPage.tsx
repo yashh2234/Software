@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Check, X, FlaskConical, Play, FileText, UserCheck, History, RotateCcw } from 'lucide-react'
 import { api } from '../lib/api'
 import { Timeline } from '../components/Timeline'
+import { JobDetailPage } from './JobDetailPage'
 
 import type { CubeReport } from '../lib/types'
 
@@ -34,6 +35,7 @@ export function ReportsPage() {
   const [assigning, setAssigning] = useState<number | null>(null)
   const [timelineReportId, setTimelineReportId] = useState<number | null>(null)
   const [timelineData, setTimelineData] = useState<Array<{ event: string; timestamp: string | null; icon: string; user?: string }>>([])
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null)
 
   const loadTypes = useCallback(async () => {
     try {
@@ -201,6 +203,10 @@ export function ReportsPage() {
     return actions
   }
 
+  if (selectedJobId) {
+    return <JobDetailPage jobId={selectedJobId} onBack={() => setSelectedJobId(null)} />
+  }
+
   return (
     <div className="two-column" style={{ gridTemplateColumns: '220px minmax(0, 1fr)' }}>
       <section className="surface" style={{ alignContent: 'start' }}>
@@ -310,7 +316,7 @@ export function ReportsPage() {
                   <div>
                     <strong>{report.uid_no}</strong>
                     <span>{report.agency_name}</span>
-                    <small>{(report as any).job_id ? `Job #${(report as any).job_id} | ` : ''}{report.material_details ?? 'N/A'} | {report.create_date ?? '-'}</small>
+                    <small>{(report as any).job_id ? <span className="link" onClick={() => setSelectedJobId((report as any).job_id)} style={{ cursor: 'pointer', textDecoration: 'underline' }}>Job #{ (report as any).job_id}</span> : ''}{report.material_details ? ` | ${report.material_details}` : ''}{report.create_date ? ` | ${report.create_date}` : ''}</small>
                   </div>
                   <div className="row-actions">
                     <span

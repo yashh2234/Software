@@ -1,12 +1,10 @@
 import { useState, useEffect, type ReactNode } from 'react'
-import { Briefcase, Circle, Clock, User, Filter } from 'lucide-react'
+import { Briefcase, Clock, User, Filter } from 'lucide-react'
 import { DataTable } from '../components/DataTable'
 import { request } from '../lib/api'
 import type { Job } from '../lib/types'
 import { JobDetailPage } from './JobDetailPage'
-
-const PRIORITY_COLORS: Record<string, string> = { low: '#6b7280', normal: '#3b82f6', high: '#f59e0b', urgent: '#ef4444' }
-const STATUS_COLORS: Record<string, string> = { active: '#10b981', pending: '#6b7280', completed: '#3b82f6', cancelled: '#ef4444', on_hold: '#f59e0b' }
+import { StatusBadge } from '../components/ui'
 
 export function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([])
@@ -51,13 +49,10 @@ export function JobsPage() {
     uid_no: <strong>{job.uid_no}</strong>,
     title: job.title ?? '-',
     stage: job.current_stage ? (
-      <span className="sync-pill" style={{ background: `${job.current_stage.color}20`, color: job.current_stage.color, border: `1px solid ${job.current_stage.color}40` }}>
-        <Circle size={8} fill={job.current_stage.color} stroke={job.current_stage.color} style={{ marginRight: 4 }} />
-        {job.current_stage.name}
-      </span>
+      <StatusBadge color={job.current_stage.color}>{job.current_stage.name}</StatusBadge>
     ) : <span style={{ color: '#65737d' }}>Not started</span>,
-    status: <span className="sync-pill" style={{ background: `${STATUS_COLORS[job.status] || '#6b7280'}20`, color: STATUS_COLORS[job.status] || '#6b7280' }}>{job.status}</span>,
-    priority: <span className="sync-pill" style={{ background: `${PRIORITY_COLORS[job.priority] || '#6b7280'}20`, color: PRIORITY_COLORS[job.priority] || '#6b7280' }}>{job.priority}</span>,
+    status: <StatusBadge status={job.status} />,
+    priority: <StatusBadge priority={job.priority} />,
     assigned: job.assigned_user ? <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><User size={13} /> {job.assigned_user.name}</span> : <span style={{ color: '#65737d' }}>Unassigned</span>,
     sla: job.active_stage_tracking?.sla_deadline ? (
       <span style={{ color: job.active_stage_tracking.is_overdue ? '#ef4444' : '#10b981', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -98,7 +93,7 @@ export function JobsPage() {
         <div className="search-field" style={{ width: 200 }}>
           <input placeholder="Search UID or title..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ width: 140, padding: '8px 12px', borderRadius: 6, border: '1px solid #dfe6ea', fontSize: '0.82rem' }}>
+        <select className="form-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="pending">Pending</option>
@@ -106,7 +101,7 @@ export function JobsPage() {
           <option value="cancelled">Cancelled</option>
           <option value="on_hold">On Hold</option>
         </select>
-        <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} style={{ width: 140, padding: '8px 12px', borderRadius: 6, border: '1px solid #dfe6ea', fontSize: '0.82rem' }}>
+        <select className="form-select" value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)}>
           <option value="">All Priority</option>
           <option value="low">Low</option>
           <option value="normal">Normal</option>
