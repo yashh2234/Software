@@ -228,196 +228,128 @@ export function PurchaseOrdersPage() {
   }
 
   return (
-    <div className="two-column users-layout" style={{ gridTemplateColumns: showForm ? '1fr 480px' : '1fr' }}>
-      <section className="surface">
-        <div className="surface-heading">
-          <div>
-            <p className="section-label">Procurement</p>
-            <h2>Purchase orders</h2>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ padding: '6px 8px', border: '1px solid var(--color-input-border)', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem' }} />
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ padding: '6px 8px', border: '1px solid var(--color-input-border)', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem' }} />
-          </div>
+    <>
+      <div className="page-header">
+        <div>
+          <p className="section-label">Procurement</p>
+          <h1>Purchase Orders</h1>
         </div>
-
-        <div className="user-toolbar">
-          <button className="ghost-button" onClick={beginCreate} type="button">
-            <Plus size={18} />
-            New Purchase Order
-          </button>
-          <span className="sync-pill">{orders.length} orders</span>
+        <div className="page-actions">
+          <button className="btn btn-primary" onClick={beginCreate} type="button"><Plus size={16} /> New Purchase Order</button>
         </div>
+      </div>
 
-        {localError ? <div className="error-banner">{localError}</div> : null}
+      <div className="filter-bar">
+        <div className="date-filter">
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          <span>to</span>
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+        </div>
+        <span className="record-count">{orders.length} orders</span>
+      </div>
 
-        {loading ? (
-          <p className="empty-state">Loading...</p>
-        ) : (
+      {localError && <div className="error-banner">{localError}</div>}
+
+      <div className="table-card">
+        {loading ? <p className="empty-state">Loading...</p> : (
           <DataTable
             columns={[
               { key: 'date', label: 'Date' },
               { key: 'agency_name', label: 'Agency' },
               { key: 'reporting_address', label: 'Address' },
               { key: 'purchase_order', label: 'PO No' },
-              { key: 'vendor_ref_no', label: 'Vendor Ref No' },
-              { key: 'vendor_ref_date', label: 'Vendor Ref Date' },
-              { key: 'total_amount', label: 'Total Amount' },
-              { key: 'actions', label: 'Actions', sortable: false },
+              { key: 'vendor_ref_no', label: 'Vendor Ref' },
+              { key: 'vendor_ref_date', label: 'Ref Date' },
+              { key: 'total_amount', label: 'Total' },
+              { key: 'actions', label: '', sortable: false },
             ]}
             rows={orders.map((po) => ({
-              date: po.date ?? '-',
+              date: <span className="mono">{po.date ?? '-'}</span>,
               agency_name: po.agency_name ?? '-',
-              reporting_address: po.reporting_address ?? '-',
-              purchase_order: po.purchase_order,
+              reporting_address: <span className="text-muted">{po.reporting_address ?? '-'}</span>,
+              purchase_order: <span className="uid-cell">{po.purchase_order}</span>,
               vendor_ref_no: po.vendor_ref_no ?? '-',
-              vendor_ref_date: po.vendor_ref_date ?? '-',
-              total_amount: money(po.total_amount),
-              actions: <div className="row-actions user-actions">
-                <button className="icon-button" onClick={() => { setShowForm(false); setEditingId(null); void handlePrint(po.iPurchaseorderId) }} type="button" title="Print">
-                  <Printer size={17} />
-                </button>
-                <button className="icon-button" onClick={() => { setShowForm(true); beginEdit(po) }} type="button" title="Edit">
-                  <Pencil size={17} />
-                </button>
-                <button className="icon-button" onClick={() => void handleDelete(po)} type="button" title="Delete">
-                  <Trash2 size={17} />
-                </button>
+              vendor_ref_date: <span className="mono">{po.vendor_ref_date ?? '-'}</span>,
+              total_amount: <span className="mono">{money(po.total_amount)}</span>,
+              actions: <div className="row-actions-inline">
+                <button className="icon-btn" onClick={() => { setEditingId(null); void handlePrint(po.iPurchaseorderId) }} type="button" title="Print"><Printer size={15} /></button>
+                <button className="icon-btn" onClick={() => { beginEdit(po) }} type="button" title="Edit"><Pencil size={15} /></button>
+                <button className="icon-btn" onClick={() => void handleDelete(po)} type="button" title="Delete"><Trash2 size={15} /></button>
               </div>,
             }))}
             exportable={true}
             filename="purchase-orders"
           />
         )}
-      </section>
+      </div>
 
-      {showForm ? (
-        <form className="surface user-form" onSubmit={handleSubmit} style={{ maxHeight: 'calc(100vh - 100px)', overflowY: 'auto' }}>
-          <div className="surface-heading">
-            <div>
-              <p className="section-label">{editingId ? 'Update' : 'Create'}</p>
-              <h2>{editingId ? 'Edit Purchase Order' : 'New Purchase Order'}</h2>
-            </div>
-            <button className="icon-button" onClick={() => { setShowForm(false); setEditingId(null) }} type="button">
-              <X size={18} />
-            </button>
+      {showForm && (
+        <div className="modal-overlay" onClick={() => { setShowForm(false); setEditingId(null) }}>
+          <div className="modal-content modal-lg" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => { setShowForm(false); setEditingId(null) }} type="button"><X size={20} /></button>
+            <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: 20 }}>
+                <p className="section-label">{editingId ? 'Update' : 'Create'}</p>
+                <h2>{editingId ? 'Edit Purchase Order' : 'New Purchase Order'}</h2>
+              </div>
+
+              <div className="form-grid-2">
+                <label className="form-field"><span>Date *</span><input type="date" value={form.date} onChange={(e) => handleField('date', e.target.value)} required /></label>
+                <label className="form-field"><span>PO No *</span><input value={form.purchase_order} onChange={(e) => handleField('purchase_order', e.target.value)} required /></label>
+              </div>
+              <label className="form-field" style={{ marginTop: 12 }}><span>Agency Name</span><input value={form.agency_name} onChange={(e) => handleField('agency_name', e.target.value)} /></label>
+              <label className="form-field" style={{ marginTop: 12 }}><span>Address</span><textarea value={form.reporting_address} onChange={(e) => handleField('reporting_address', e.target.value)} rows={2} /></label>
+              <div className="form-grid-2" style={{ marginTop: 12 }}>
+                <label className="form-field"><span>Vendor Ref No</span><input value={form.vendor_ref_no} onChange={(e) => handleField('vendor_ref_no', e.target.value)} /></label>
+                <label className="form-field"><span>Vendor Ref Date</span><input type="date" value={form.vendor_ref_date} onChange={(e) => handleField('vendor_ref_date', e.target.value)} /></label>
+              </div>
+
+              <div style={{ marginTop: 20, marginBottom: 8 }}><strong style={{ fontSize: '0.84rem' }}>Line Items</strong></div>
+              <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', marginBottom: 12, overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--surface-sunken)' }}>
+                      <th style={{ padding: '8px 10px', textAlign: 'left', fontSize: '0.7rem', textTransform: 'uppercase' }}>Description</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'right', width: 60, fontSize: '0.7rem', textTransform: 'uppercase' }}>Rate</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'center', width: 50, fontSize: '0.7rem', textTransform: 'uppercase' }}>Unit</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'right', width: 60, fontSize: '0.7rem', textTransform: 'uppercase' }}>Disc</th>
+                      <th style={{ padding: '8px 10px', textAlign: 'right', width: 70, fontSize: '0.7rem', textTransform: 'uppercase' }}>Amount</th>
+                      <th style={{ padding: '8px 10px', width: 32 }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {form.items.map((item, index) => (
+                      <tr key={index} style={{ borderTop: '1px solid var(--color-border-light)' }}>
+                        <td style={{ padding: 2 }}><input value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} placeholder="Description" style={{ width: '100%', border: 'none', padding: '6px 4px', fontSize: '0.82rem' }} /></td>
+                        <td style={{ padding: 2 }}><input type="number" value={item.rate} onChange={(e) => updateItem(index, 'rate', e.target.value)} style={{ width: '100%', border: 'none', padding: '6px 4px', textAlign: 'right', fontSize: '0.82rem' }} /></td>
+                        <td style={{ padding: 2 }}><input value={item.unit} onChange={(e) => updateItem(index, 'unit', e.target.value)} placeholder="Unit" style={{ width: '100%', border: 'none', padding: '6px 4px', textAlign: 'center', fontSize: '0.82rem' }} /></td>
+                        <td style={{ padding: 2 }}><input type="number" value={item.discount} onChange={(e) => updateItem(index, 'discount', e.target.value)} style={{ width: '100%', border: 'none', padding: '6px 4px', textAlign: 'right', fontSize: '0.82rem' }} /></td>
+                        <td style={{ padding: 2 }}><span className="mono" style={{ display: 'block', padding: '6px 4px', textAlign: 'right' }}>{parseFloat(item.amount || '0').toFixed(2)}</span></td>
+                        <td style={{ padding: 2 }}><button className="icon-btn" onClick={() => removeItem(index)} type="button" title="Remove" style={{ width: 28, height: 28 }}><X size={14} /></button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <button className="ghost-button" onClick={addItem} type="button" style={{ width: '100%', fontSize: '0.82rem', borderTop: '1px solid var(--color-border)', borderRadius: 0 }}>+ Add Item</button>
+              </div>
+
+              <div className="form-grid-2">
+                <label className="form-field"><span>Transportation</span><input type="number" value={form.transportation} onChange={(e) => setForm((prev) => recalcTotals({ ...prev, transportation: e.target.value }))} /></label>
+                <label className="form-field"><span>Advance Amount</span><input type="number" value={form.advance_amount} onChange={(e) => setForm((prev) => recalcTotals({ ...prev, advance_amount: e.target.value }))} /></label>
+                <label className="form-field"><span>GST @ 18%</span><input type="number" value={form.gst_amount} readOnly style={{ background: 'var(--surface-sunken)' }} /></label>
+                <label className="form-field"><span>Net Amount</span><input type="number" value={form.net_amount} readOnly style={{ background: 'var(--surface-sunken)', fontWeight: 700 }} /></label>
+              </div>
+              <label className="form-field" style={{ marginTop: 12 }}><span>Remark</span><textarea value={form.remark} onChange={(e) => handleField('remark', e.target.value)} rows={2} /></label>
+
+              {localError && <div className="error-banner" style={{ marginTop: 12 }}>{localError}</div>}
+              <div style={{ marginTop: 20, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                <button className="btn btn-outline" onClick={() => { setShowForm(false); setEditingId(null) }} type="button">Cancel</button>
+                <button type="submit" className="btn btn-primary">{editingId ? 'Update PO' : 'Create PO'}</button>
+              </div>
+            </form>
           </div>
-
-          <div className="field-row">
-            <label>
-              Date
-              <input type="date" value={form.date} onChange={(e) => handleField('date', e.target.value)} required />
-            </label>
-            <label>
-              Purchase Order No
-              <input value={form.purchase_order} onChange={(e) => handleField('purchase_order', e.target.value)} required />
-            </label>
-          </div>
-
-          <label>
-            Agency Name
-            <input value={form.agency_name} onChange={(e) => handleField('agency_name', e.target.value)} />
-          </label>
-
-          <label>
-            Reporting Address
-            <textarea value={form.reporting_address} onChange={(e) => handleField('reporting_address', e.target.value)} rows={2} />
-          </label>
-
-          <div className="field-row">
-            <label>
-              Vendor Ref No
-              <input value={form.vendor_ref_no} onChange={(e) => handleField('vendor_ref_no', e.target.value)} />
-            </label>
-            <label>
-              Vendor Ref Date
-              <input type="date" value={form.vendor_ref_date} onChange={(e) => handleField('vendor_ref_date', e.target.value)} />
-            </label>
-          </div>
-
-          <div style={{ marginTop: 16, marginBottom: 8 }}>
-            <strong style={{ fontSize: '0.84rem' }}>Line Items</strong>
-          </div>
-
-          <div style={{ border: '1px solid var(--color-input-border)', borderRadius: 'var(--radius-sm)', marginBottom: 12 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
-              <thead>
-                <tr style={{ background: 'var(--color-surface-alt)' }}>
-                  <th style={{ padding: '4px 6px', textAlign: 'left' }}>Description</th>
-                  <th style={{ padding: '4px 6px', textAlign: 'right', width: 50 }}>Rate</th>
-                  <th style={{ padding: '4px 6px', textAlign: 'center', width: 44 }}>Unit</th>
-                  <th style={{ padding: '4px 6px', textAlign: 'right', width: 50 }}>Disc</th>
-                  <th style={{ padding: '4px 6px', textAlign: 'right', width: 60 }}>Amount</th>
-                  <th style={{ padding: '4px 6px', width: 28 }}></th>
-                </tr>
-              </thead>
-              <tbody>
-                {form.items.map((item, index) => (
-                  <tr key={index}>
-                    <td style={{ padding: 2 }}>
-                      <input value={item.description} onChange={(e) => updateItem(index, 'description', e.target.value)} placeholder="Description" style={{ width: '100%', border: 'none', padding: '4px 2px', fontSize: '0.78rem' }} />
-                    </td>
-                    <td style={{ padding: 2 }}>
-                      <input type="number" value={item.rate} onChange={(e) => updateItem(index, 'rate', e.target.value)} style={{ width: '100%', border: 'none', padding: '4px 2px', textAlign: 'right', fontSize: '0.78rem' }} />
-                    </td>
-                    <td style={{ padding: 2 }}>
-                      <input value={item.unit} onChange={(e) => updateItem(index, 'unit', e.target.value)} placeholder="Unit" style={{ width: '100%', border: 'none', padding: '4px 2px', textAlign: 'center', fontSize: '0.78rem' }} />
-                    </td>
-                    <td style={{ padding: 2 }}>
-                      <input type="number" value={item.discount} onChange={(e) => updateItem(index, 'discount', e.target.value)} style={{ width: '100%', border: 'none', padding: '4px 2px', textAlign: 'right', fontSize: '0.78rem' }} />
-                    </td>
-                    <td style={{ padding: 2 }}>
-                      <span style={{ display: 'block', padding: '4px 2px', textAlign: 'right' }}>{parseFloat(item.amount || '0').toFixed(2)}</span>
-                    </td>
-                    <td style={{ padding: 2 }}>
-                      <button className="icon-button" onClick={() => removeItem(index)} type="button" title="Remove" style={{ width: 24, height: 24 }}>
-                        <X size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <button className="ghost-button" onClick={addItem} type="button" style={{ width: '100%', fontSize: '0.78rem', borderTop: '1px solid var(--color-input-border)', borderRadius: 0 }}>
-              + Add Item
-            </button>
-          </div>
-
-          <div className="field-row">
-            <label>
-              Transportation
-              <input type="number" value={form.transportation} onChange={(e) => setForm((prev) => recalcTotals({ ...prev, transportation: e.target.value }))} />
-            </label>
-            <label>
-              Advance Amount
-              <input type="number" value={form.advance_amount} onChange={(e) => setForm((prev) => recalcTotals({ ...prev, advance_amount: e.target.value }))} />
-            </label>
-          </div>
-
-          <div className="field-row">
-            <label>
-              GST @ 18%
-              <input type="number" value={form.gst_amount} readOnly style={{ background: 'var(--color-surface-alt)' }} />
-            </label>
-            <label>
-              Net Amount
-              <input type="number" value={form.net_amount} readOnly style={{ background: 'var(--color-surface-alt)', fontWeight: 700 }} />
-            </label>
-          </div>
-
-          <label>
-            Remark
-            <textarea value={form.remark} onChange={(e) => handleField('remark', e.target.value)} rows={2} />
-          </label>
-
-          {localError ? <div className="error-banner">{localError}</div> : null}
-
-          <div className="form-actions">
-            <button className="ghost-button" onClick={() => { setShowForm(false); setEditingId(null) }} type="button">Cancel</button>
-            <button type="submit">{editingId ? 'Update Purchase Order' : 'Create Purchase Order'}</button>
-          </div>
-        </form>
-      ) : null}
-    </div>
+        </div>
+      )}
+    </>
   )
 }

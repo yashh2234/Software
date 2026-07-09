@@ -1,76 +1,74 @@
 /*
-  Design system — "Calibration"
-  A construction-materials testing lab lives and dies by precise
-  measurement: tolerances, tick marks, certified readings. This palette
-  and type system take their cue from that world — deep instrument-panel
-  ink, a single calibrated-amber accent (the color of warning tape and
-  dial needles), and a monospace face reserved for anything that is a
-  measured value: IDs, dates, quantities, test results.
+  Design system — "Modern Lab"
+  Clean, spacious, contemporary UI with subtle depth.
 */
 
 :root {
-  /* ---- Ink & neutrals ---- */
-  --ink-950: #0b1220;
-  --ink-800: #16213a;
-  --ink-700: #1e2a44;
-  --ink-600: #2c3b5c;
+  /* ---- Neutrals ---- */
+  --ink-950: #0f172a;
+  --ink-800: #1e293b;
+  --ink-700: #334155;
+  --ink-600: #475569;
 
-  --paper: #f5f6f9;
-  --color-bg: #f5f6f9;
+  --paper: #f8fafc;
+  --color-bg: #f8fafc;
   --color-surface: #ffffff;
   --surface-raised: #ffffff;
-  --surface-sunken: #eef0f4;
+  --surface-sunken: #f1f5f9;
 
-  --color-text: #101827;
-  --color-text-muted: #52627a;
-  --color-text-subtle: #7c8aa0;
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+  --color-text-subtle: #94a3b8;
 
-  --color-border: #dfe3ec;
-  --color-border-light: #e9ecf3;
-  --color-input-bg: #f8f9fc;
-  --color-input-border: #d7dce6;
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+  --color-input-bg: #f8fafc;
+  --color-input-border: #e2e8f0;
 
-  /* ---- Accent: calibrated amber ---- */
-  --color-accent: #c26a2b;
-  --color-accent-dark: #9a5320;
-  --accent-tint: #fbeee0;
-  --accent-tint-border: #f0d5b8;
+  /* ---- Primary: indigo ---- */
+  --color-primary: #4f46e5;
+  --color-primary-dark: #4338ca;
+  --color-primary-tint: #eef2ff;
+  --color-primary-hover: #4338ca;
 
-  /* ---- Primary: deep instrument blue ---- */
-  --color-primary: #1e3a5f;
-  --color-primary-dark: #142a47;
-  --color-primary-tint: #e8edf5;
+  /* ---- Accent: amber ---- */
+  --color-accent: #f59e0b;
+  --color-accent-dark: #d97706;
+  --accent-tint: #fef3c7;
+  --accent-tint-border: #fde68a;
 
   /* ---- Status ---- */
-  --color-green: #146c53;
-  --color-green-text: #146c53;
-  --color-green-bg: #e6f4ef;
-  --color-green-border: #c7e4d9;
-  --color-green-pill-bg: #dcf2e9;
+  --color-green: #059669;
+  --color-green-text: #059669;
+  --color-green-bg: #ecfdf5;
+  --color-green-border: #a7f3d0;
+  --color-green-pill-bg: #d1fae5;
 
-  --color-red: #9c3b3b;
-  --color-red-text: #9c3b3b;
-  --color-red-bg: #fbeaea;
-  --color-red-pill-bg: #f7dede;
+  --color-red: #dc2626;
+  --color-red-text: #dc2626;
+  --color-red-bg: #fef2f2;
+  --color-red-pill-bg: #fee2e2;
 
-  --color-orange-text: #8a5a19;
-  --color-orange-bg: #fbf0dd;
+  --color-orange-text: #d97706;
+  --color-orange-bg: #fffbeb;
 
-  /* ---- Sidebar (dark instrument panel) ---- */
-  --color-sidebar-bg: #0b1220;
-  --color-sidebar-bg-raised: #131d33;
-  --color-sidebar-text: #eef1f7;
+  /* ---- Sidebar ---- */
+  --color-sidebar-bg: #0f172a;
+  --color-sidebar-bg-raised: #1e293b;
+  --color-sidebar-text: #e2e8f0;
   --color-sidebar-border: rgba(255, 255, 255, 0.08);
 
-  --sidebar-width: 264px;
+  --sidebar-width: 260px;
 
   /* ---- Shape & elevation ---- */
-  --radius: 10px;
-  --radius-sm: 7px;
-  --radius-lg: 14px;
-  --shadow-sm: 0 1px 2px rgba(16, 24, 39, 0.05);
-  --shadow: 0 8px 24px rgba(16, 24, 39, 0.08);
-  --shadow-lg: 0 24px 48px rgba(16, 24, 39, 0.14);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
 
   /* ---- Type ---- */
   --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
@@ -86,7 +84,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   font-family: var(--font-ui);
-  line-height: 1.5;
+  line-height: 1.6;
   font-weight: 400;
   color: var(--color-text);
   background: var(--paper);
@@ -100,15 +98,14 @@ body {
 
 button, input, select, textarea { font: inherit; }
 
-h1, h2, h3 { margin: 0; letter-spacing: -0.01em; font-weight: 700; }
+h1, h2, h3 { margin: 0; letter-spacing: -0.025em; font-weight: 700; }
+h1 { font-size: 1.75rem; line-height: 1.2; }
+h2 { font-size: 1.25rem; line-height: 1.3; }
+h3 { font-size: 1.1rem; line-height: 1.4; }
 
 a { color: var(--color-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-/* Numeric / data values get the monospace treatment throughout the app */
-.data-value,
-.metric-tile strong,
-td.data-cell,
 .mono {
   font-family: var(--font-data);
   font-variant-numeric: tabular-nums;
@@ -119,25 +116,35 @@ td.data-cell,
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin: 0 0 8px;
-  color: var(--color-accent-dark);
-  font-size: 0.72rem;
+  margin: 0 0 6px;
+  color: var(--color-primary);
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .section-label::before {
   content: '';
-  width: 10px;
+  width: 8px;
   height: 2px;
-  background: var(--color-accent);
+  background: var(--color-primary);
   border-radius: 2px;
 }
 
-/* Visible keyboard focus everywhere */
+.text-muted { color: var(--color-text-muted); }
+.text-subtle { color: var(--color-text-subtle); }
+.text-success { color: var(--color-green); }
+.text-danger { color: var(--color-red); }
+
+.uid-cell {
+  font-weight: 700;
+  color: var(--color-primary);
+  font-family: var(--font-data);
+}
+
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 4px;
 }

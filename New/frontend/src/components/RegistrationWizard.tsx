@@ -129,27 +129,18 @@ export function RegistrationWizard({ editingId, initial, onSaved, onCancel, onGe
   }
 
   return (
-    <form className="surface user-form" onSubmit={handleSubmit} style={{ minWidth: 520 }}>
-      <div className="surface-heading">
-        <div>
-          <p className="section-label">{editingId ? 'Update' : 'Create'}</p>
-          <h2>{editingId ? 'Edit registration' : 'New registration'}</h2>
-        </div>
-        <ClipboardList size={20} />
+    <form className="user-form" onSubmit={handleSubmit} style={{ minWidth: 0 }}>
+      <div style={{ marginBottom: 20 }}>
+        <p className="section-label">{editingId ? 'Update' : 'Create'}</p>
+        <h2>{editingId ? 'Edit registration' : 'New registration'}</h2>
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 2, marginBottom: 20, borderBottom: '2px solid #e8eef1', overflowX: 'auto' }}>
+      <div className="tab-nav">
         {TABS.map((t, i) => {
           const Icon = t.icon
           return (
-            <button key={t.key} type="button" onClick={() => setTab(i)} style={{
-              flex: '0 0 auto', padding: '10px 12px', textAlign: 'center', fontSize: '0.76rem', fontWeight: 700,
-              color: i === tab ? '#195340' : '#65737d',
-              borderBottom: i === tab ? '2px solid #195340' : '2px solid transparent',
-              marginBottom: -2, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-              whiteSpace: 'nowrap',
-            }}>
+            <button key={t.key} type="button" className={`tab-btn ${i === tab ? 'active' : ''}`} onClick={() => setTab(i)}>
               <Icon size={14} /> {t.label}
             </button>
           )

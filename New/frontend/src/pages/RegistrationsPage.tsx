@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, UserPlus, UserCog, History, Download, Calendar } from 'lucide-react'
+import { Search, UserPlus, UserCog, History, Download, Calendar, X } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { api, request } from '../lib/api'
 import { DataTable } from '../components/DataTable'
@@ -115,15 +115,8 @@ export function RegistrationsPage() {
     exportToCsv(headers, rows, `registrations_${new Date().toISOString().slice(0, 10)}.csv`)
   }
 
-  const applyDateFilter = () => {
-    setActiveFilter(true)
-  }
-
-  const clearDateFilter = () => {
-    setStartDate('')
-    setEndDate('')
-    setActiveFilter(false)
-  }
+  const applyDateFilter = () => { setActiveFilter(true) }
+  const clearDateFilter = () => { setStartDate(''); setEndDate(''); setActiveFilter(false) }
 
   const wizardInitial = (): RegistrationFormData => {
     if (!editingId) return {
@@ -188,39 +181,39 @@ export function RegistrationsPage() {
   }
 
   return (
-    <div className="two-column users-layout">
-      <section className="surface">
-        <div className="surface-heading">
-          <div>
-            <p className="section-label">Intake</p>
-            <h2>Client registrations</h2>
-          </div>
-          <label className="search-field">
-            <Search size={16} />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search UID, agency, mobile" />
-          </label>
+    <>
+      <div className="page-header">
+        <div>
+          <p className="section-label">Intake</p>
+          <h1>Client Registrations</h1>
         </div>
-
-        <div className="user-toolbar" style={{ flexWrap: 'wrap', gap: 8 }}>
-          <button className="ghost-button" onClick={beginCreate} type="button">
-            <UserPlus size={18} />
-            New registration
+        <div className="page-actions">
+          <button className="btn btn-primary" onClick={beginCreate} type="button">
+            <UserPlus size={16} /> New Registration
           </button>
-          <button className="ghost-button" onClick={handleExport} type="button">
-            <Download size={18} />
-            Export
+          <button className="btn btn-outline" onClick={handleExport} type="button">
+            <Download size={16} /> Export
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
-            <Calendar size={14} style={{ color: '#65737d' }} />
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ fontSize: '0.8rem', padding: '4px 8px', borderRadius: 4, border: '1px solid #dfe6ea' }} />
-            <span style={{ color: '#65737d', fontSize: '0.8rem' }}>to</span>
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ fontSize: '0.8rem', padding: '4px 8px', borderRadius: 4, border: '1px solid #dfe6ea' }} />
-            <button className="ghost-button" onClick={applyDateFilter} style={{ fontSize: '0.8rem', padding: '4px 12px' }}>Go</button>
-            {activeFilter ? <button className="ghost-button" onClick={clearDateFilter} style={{ fontSize: '0.8rem', padding: '4px 8px', color: '#ef4444' }}>Clear</button> : null}
-          </div>
-          <span className="sync-pill">{filtered.length} records</span>
         </div>
+      </div>
 
+      <div className="filter-bar">
+        <div className="search-field">
+          <Search size={16} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search UID, agency, mobile..." />
+        </div>
+        <div className="date-filter">
+          <Calendar size={14} />
+          <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          <span>to</span>
+          <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          <button className="btn btn-sm" onClick={applyDateFilter}>Go</button>
+          {activeFilter && <button className="btn btn-sm btn-danger" onClick={clearDateFilter}>Clear</button>}
+        </div>
+        <span className="record-count">{filtered.length} records</span>
+      </div>
+
+      <div className="table-card">
         <DataTable
           columns={[
             { key: 'uid', label: 'UID' },
@@ -234,49 +227,56 @@ export function RegistrationsPage() {
             { key: 'advance', label: 'Advance' },
             { key: 'balance', label: 'Balance' },
             { key: 'status', label: 'Status' },
-            { key: 'actions', label: 'Actions', sortable: false },
+            { key: 'actions', label: '', sortable: false },
           ]}
           rows={filtered.map((registration) => ({
-            uid: <span style={{ fontWeight: 600, color: '#195340' }}>{registration.uid_no}</span>,
-            date: normalizeDate(registration.received_date),
+            uid: <span className="uid-cell">{registration.uid_no}</span>,
+            date: <span className="mono">{normalizeDate(registration.received_date)}</span>,
             agency: registration.agency_name,
-            address: registration.reporting_address,
-            mobile: registration.mobile_no,
+            address: <span className="text-muted">{registration.reporting_address}</span>,
+            mobile: <span className="mono">{registration.mobile_no}</span>,
             work: registration.name_of_work,
-            samples: registration.sample_details,
-            amount: money(registration.total_payment),
-            advance: money(registration.advance_payment),
-            balance: <span style={{ color: registration.balance_dues > 0 ? '#ef4444' : '#22c55e', fontWeight: 600 }}>{money(registration.balance_dues)}</span>,
+            samples: <span className="text-muted">{registration.sample_details}</span>,
+            amount: <span className="mono">{money(registration.total_payment)}</span>,
+            advance: <span className="mono">{money(registration.advance_payment)}</span>,
+            balance: <span className={`mono ${registration.balance_dues > 0 ? 'text-danger' : 'text-success'}`}>{money(registration.balance_dues)}</span>,
             status: registration.balance_dues > 0
-              ? <span style={{ color: '#e8a838', fontWeight: 600 }}>Pending</span>
-              : <span style={{ color: '#22c55e', fontWeight: 600 }}>Complete</span>,
-            actions: <div style={{ display: 'flex', gap: 4 }}>
-              <button className="icon-button" onClick={() => void showHistory(registration)} type="button" title="View history">
-                <History size={17} />
+              ? <span className="badge badge-warning">Pending</span>
+              : <span className="badge badge-success">Complete</span>,
+            actions: <div className="row-actions-inline">
+              <button className="icon-btn" onClick={() => void showHistory(registration)} type="button" title="History">
+                <History size={15} />
               </button>
-              <button className="icon-button" onClick={() => beginEdit(registration)} type="button" title="Edit registration">
-                <UserCog size={17} />
+              <button className="icon-btn" onClick={() => beginEdit(registration)} type="button" title="Edit">
+                <UserCog size={15} />
               </button>
             </div>,
           }))}
         />
-      </section>
+      </div>
 
-      {(editingId !== null || formVisible) ? (
-        <RegistrationWizard
-          key={editingId ?? 'new'}
-          editingId={editingId}
-          initial={wizardInitial()}
-          onSaved={handleSaved}
-          onCancel={() => { setEditingId(null); setFormVisible(false) }}
-          onGenerateUid={async () => { const d = await request<{ uid_no: string }>('/registrations/generate-uid'); return d.uid_no }}
-          generatingUid={false}
-        />
-      ) : null}
+      {formVisible && (
+        <div className="modal-overlay" onClick={() => { setEditingId(null); setFormVisible(false) }}>
+          <div className="modal-content modal-lg" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => { setEditingId(null); setFormVisible(false) }} type="button">
+              <X size={20} />
+            </button>
+            <RegistrationWizard
+              key={editingId ?? 'new'}
+              editingId={editingId}
+              initial={wizardInitial()}
+              onSaved={handleSaved}
+              onCancel={() => { setEditingId(null); setFormVisible(false) }}
+              onGenerateUid={async () => { const d = await request<{ uid_no: string }>('/registrations/generate-uid'); return d.uid_no }}
+              generatingUid={false}
+            />
+          </div>
+        </div>
+      )}
 
-      {timelineData.length > 0 ? (
+      {timelineData.length > 0 && (
         <Timeline entries={timelineData} onClose={() => { setTimelineData([]) }} />
-      ) : null}
-    </div>
+      )}
+    </>
   )
 }
