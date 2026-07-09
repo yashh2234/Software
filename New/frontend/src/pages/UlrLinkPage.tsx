@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Download } from 'lucide-react'
 import { api } from '../lib/api'
 import { useTracking } from '../lib/useTracking'
 
@@ -20,15 +20,39 @@ export function UlrLinkPage() {
     const [editingId, setEditingId] = useState<number | null>(null)
     const [form, setForm] = useState(emptyForm)
     const [error, setError] = useState('')
+    const [startDate, setStartDate] = useState('')
+    const [endDate, setEndDate] = useState('')
 
     const load = useCallback(async () => {
         setLoading(true)
-        try { const d = await api.ulrLinks(); setLinks(d.data) }
-        catch { setError('Failed to load') }
+        try {
+            const params: Record<string, string> = {}
+            if (startDate && endDate) { params.start_date = startDate; params.end_date = endDate }
+            const d = Object.keys(params).length > 0 ? await api.ulrLinksFiltered(params) : await api.ulrLinks()
+            setLinks(d.data)
+        } catch { setError('Failed to load') }
         finally { setLoading(false) }
-    }, [])
+    }, [startDate, endDate])
 
     useEffect(() => { void load() }, [load])
+
+    const handleFilter = () => { void load() }
+    const handleClearFilter = () => { setStartDate(''); setEndDate('') }
+
+    const handleExport = async () => {
+        try {
+            const params: Record<string, string> = {}
+            if (startDate && endDate) { params.start_date = startDate; params.end_date = endDate }
+            const d = await api.ulrLinksExport(params)
+            const rows = d.data
+            const header = 'Date,ULR No,UID No,Agency,Project,Sample Details\n'
+            const csv = header + rows.map(r => `"${r.date}","${r.ulr_no}","${r.uid_no}","${r.name_of_agency}","${r.name_of_project}","${r.sample_details}"`).join('\n')
+            const blob = new Blob([csv], { type: 'text/csv' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a'); a.href = url; a.download = `ulr_links_${new Date().toISOString().slice(0, 10)}.csv`; a.click()
+            URL.revokeObjectURL(url)
+        } catch { setError('Failed to export') }
+    }
 
     const handleCreate = () => { setEditingId(null); setForm(emptyForm); setView('form') }
     const handleEdit = (link: UlrLink) => { setEditingId(link.id); setForm({ uid_no: link.uid_no, date: link.date?.slice(0, 10) ?? '', name_of_department: link.name_of_department ?? '', name_of_agency: link.name_of_agency ?? '', name_of_project: link.name_of_project ?? '', sample_details: link.sample_details ?? '', qty: link.qty ?? '', parameters: link.parameters ?? '', testing_period: link.testing_period ?? '', sample_received_date: link.sample_received_date?.slice(0, 10) ?? '', report_dispatch_date: link.report_dispatch_date?.slice(0, 10) ?? '', bill_details: link.bill_details ?? '', signature_remark: link.signature_remark ?? '' }); setView('form') }
@@ -84,7 +108,17 @@ export function UlrLinkPage() {
         <>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
                 <h2>ULR Link Register</h2>
-                <button className="primary-button" onClick={handleCreate}><Plus size={16} /> Create ULR</button>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ padding: '6px 10px', border: '1px solid #dfe6ea', borderRadius: 6, fontSize: '0.85rem' }} />
+                        <span style={{ color: '#65737d' }}>to</span>
+                        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ padding: '6px 10px', border: '1px solid #dfe6ea', borderRadius: 6, fontSize: '0.85rem' }} />
+                        <button className="ghost-button" onClick={handleFilter}>Go</button>
+                        {(startDate || endDate) && <button className="ghost-button" onClick={handleClearFilter}>Clear</button>}
+                    </div>
+                    <button className="ghost-button" onClick={() => void handleExport()}><Download size={14} /> Export CSV</button>
+                    <button className="primary-button" onClick={handleCreate}><Plus size={16} /> Create ULR</button>
+                </div>
             </div>
             <section className="surface">
                 {loading ? <p className="empty-state">Loading...</p>

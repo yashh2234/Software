@@ -11,9 +11,31 @@ use Illuminate\Http\Request;
 
 class UlrLinkController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $links = UlrLink::query()->orderByDesc('id')->limit(200)->get();
+        $query = UlrLink::query();
+
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        if ($startDate && $endDate) {
+            $query->whereDate('date', '>=', $startDate)->whereDate('date', '<=', $endDate);
+        }
+
+        $links = $query->orderByDesc('id')->limit(200)->get();
+        return response()->json(['data' => $links]);
+    }
+
+    public function export(Request $request): JsonResponse
+    {
+        $query = UlrLink::query();
+
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        if ($startDate && $endDate) {
+            $query->whereDate('date', '>=', $startDate)->whereDate('date', '<=', $endDate);
+        }
+
+        $links = $query->orderByDesc('id')->limit(1000)->get();
         return response()->json(['data' => $links]);
     }
 

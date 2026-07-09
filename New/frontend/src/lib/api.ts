@@ -325,8 +325,9 @@ export const api = {
     return request(`/reports/${type}/${id}/print`)
   },
 
-  dueReports(): Promise<{ data: Array<{ iClientId: number; uid_no: string; received_date: string | null; agency_name: string; mobile_no: string; name_of_work: string; sample_details: string }> }> {
-    return request('/due-reports')
+  dueReports(params?: Record<string, string>): Promise<{ data: Array<{ iClientId: number; uid_no: string; received_date: string | null; agency_name: string; reporting_address: string; mobile_no: string; name_of_work: string; sample_details: string; total_payment: number; advance_payment: number; balance_dues: number; scan_copy: string | null; report_copy: string | null }> }> {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+    return request(`/due-reports${qs}`)
   },
 
   finalReports(params?: Record<string, string>): Promise<{ data: Array<{ iReportId: number; uid_no: string; create_date: string | null; agency_name: string; report_type: string; report_type_label: string; status: string; material_details: string | null; reference_no: string | null }> }> {
@@ -340,6 +341,16 @@ export const api = {
 
   ulrLinks(): Promise<{ data: Array<{ id: number; uid_no: string; ulr_no: string; date: string; name_of_department: string; name_of_agency: string; name_of_project: string; sample_details: string; qty: string; parameters: string; testing_period: string; sample_received_date: string | null; report_dispatch_date: string | null; bill_details: string; signature_remark: string }> }> {
     return request('/ulr-links')
+  },
+
+  ulrLinksFiltered(params: Record<string, string>): Promise<{ data: Array<{ id: number; uid_no: string; ulr_no: string; date: string; name_of_department: string; name_of_agency: string; name_of_project: string; sample_details: string; qty: string; parameters: string; testing_period: string; sample_received_date: string | null; report_dispatch_date: string | null; bill_details: string; signature_remark: string }> }> {
+    const qs = new URLSearchParams(params).toString()
+    return request(`/ulr-links?${qs}`)
+  },
+
+  ulrLinksExport(params?: Record<string, string>): Promise<{ data: Array<{ id: number; uid_no: string; ulr_no: string; date: string; name_of_agency: string; name_of_project: string; sample_details: string }> }> {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+    return request(`/ulr-links/export${qs}`)
   },
 
   createUlrLink(data: Record<string, unknown>): Promise<{ message: string; ulr_no: string }> {
@@ -390,6 +401,10 @@ export const api = {
     return request('/dashboard/cash-summary')
   },
 
+  monthlyExpenses(): Promise<{ data: Array<{ category: string; total: number }> }> {
+    return request('/expenses/monthly-summary')
+  },
+
   reapproveReport(reportId: number): Promise<{ message: string; status: string }> {
     return request(`/reports/${reportId}/reapprove`, { method: 'POST' })
   },
@@ -400,6 +415,18 @@ export const api = {
 
   registrationHistory(id: number): Promise<{ data: Array<{ event: string; timestamp: string; icon: string; user?: string }>; uid_no: string }> {
     return request(`/registrations/${id}/history`)
+  },
+
+  uploadRegistrationScan(formData: FormData): Promise<{ message: string; path: string; url: string }> {
+    const token = getToken()
+    return fetch(`${BASE_URL}/registrations/upload-scan`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    }).then(r => r.json())
   },
 }
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Plus, IndianRupee } from 'lucide-react'
+import { Plus, IndianRupee, Pencil, Trash2, Calendar, Download } from 'lucide-react'
 import { request } from '../lib/api'
 import { DataTable } from '../components/DataTable'
 
@@ -21,11 +21,23 @@ interface ExpenseSummary {
   total_expenses: number
 }
 
+const EXPENSE_CATEGORIES = [
+  'Site Exp', 'Corier and Speed Post', 'Convence and Transportation',
+  'Survey Exp', 'DD and tendor Exp', 'Omendra Gupta Current ac',
+  'Office Maintenance', 'Refreshment', 'stationary',
+  'Machine and Car Repairing', 'Lab Testing Exp', 'Audit Expenses',
+  'Telephone/Water/Electricity Exp', 'Printor and Computer Repairing exp',
+  'Printing Exp', 'Cash advance', 'Salary', 'Other Exp',
+]
+
+const PAYMENT_MODES = ['', 'Cash', 'UPI', 'Bank Transfer', 'Card', 'Cheque']
+
 export function ExpensesPage() {
   const [items, setItems] = useState<ExpenseItem[]>([])
   const [summary, setSummary] = useState<ExpenseSummary>({ total_income: 0, total_expenses: 0 })
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [category, setCategory] = useState('')
   const [totalIncome, setTotalIncome] = useState('')
@@ -34,11 +46,19 @@ export function ExpensesPage() {
   const [remark, setRemark] = useState('')
   const [personName, setPersonName] = useState('')
   const [localError, setLocalError] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await request<{ data: ExpenseItem[]; summary: ExpenseSummary }>('/expenses')
+      const params: Record<string, string> = {}
+      if (startDate) params.start_date = startDate
+      if (endDate) params.end_date = endDate
+      if (categoryFilter) params.category = categoryFilter
+      const qs = new URLSearchParams(params).toString()
+      const data = await request<{ data: ExpenseItem[]; summary: ExpenseSummary }>(`/expenses${qs ? '?' + qs : ''}`)
       setItems(data.data)
       setSummary(data.summary)
     } catch {
@@ -46,36 +66,75 @@ export function ExpensesPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [startDate, endDate, categoryFilter])
 
   useEffect(() => { void load() }, [load])
+
+  const resetForm = () => {
+    setDate(new Date().toISOString().slice(0, 10))
+    setCategory('')
+    setTotalIncome('')
+    setTotalExpenses('')
+    setPaymentMode('')
+    setRemark('')
+    setPersonName('')
+    setEditingId(null)
+  }
+
+  const beginEdit = (item: ExpenseItem) => {
+    setEditingId(item.id)
+    setDate(item.date)
+    setCategory(item.category)
+    setTotalIncome(String(item.total_income || ''))
+    setTotalExpenses(String(item.total_expenses || ''))
+    setPaymentMode(item.payment_mode)
+    setRemark(item.remark)
+    setPersonName(item.person_name)
+    setShowForm(true)
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     try {
-      await request('/expenses', {
-        method: 'POST',
-        body: JSON.stringify({
-          date,
-          category,
-          total_income: totalIncome || '0',
-          total_expenses: totalExpenses || '0',
-          payment_mode: paymentMode,
-          remark,
-          person_name: personName,
-        }),
-      })
+      const payload = {
+        date, category,
+        total_income: totalIncome || '0',
+        total_expenses: totalExpenses || '0',
+        payment_mode: paymentMode,
+        remark, person_name: personName,
+      }
+      if (editingId) {
+        await request(`/expenses/${editingId}`, { method: 'PUT', body: JSON.stringify(payload) })
+      } else {
+        await request('/expenses', { method: 'POST', body: JSON.stringify(payload) })
+      }
       setShowForm(false)
-      setCategory('')
-      setTotalIncome('')
-      setTotalExpenses('')
-      setPaymentMode('')
-      setRemark('')
-      setPersonName('')
+      resetForm()
       await load()
     } catch {
-      setLocalError('Failed to save expense')
+      setLocalError(editingId ? 'Failed to update expense' : 'Failed to save expense')
     }
+  }
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Delete this expense entry?')) return
+    try {
+      await request(`/expenses/${id}`, { method: 'DELETE' })
+      await load()
+    } catch {
+      setLocalError('Failed to delete expense')
+    }
+  }
+
+  const handleExport = () => {
+    const headers = ['Date', 'Category', 'Income', 'Expenses', 'Payment Mode', 'Person', 'Remark']
+    const rows = items.map((item) => [item.date, item.category, item.total_income, item.total_expenses, item.payment_mode, item.person_name, item.remark])
+    const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))].join('\n')
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `expenses_${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
   }
 
   function money(v: number) {
@@ -97,11 +156,23 @@ export function ExpensesPage() {
           </div>
         </div>
 
-        <div className="user-toolbar">
-          <button className="ghost-button" onClick={() => setShowForm(true)} type="button">
-            <Plus size={18} />
-            Add entry
+        <div className="user-toolbar" style={{ flexWrap: 'wrap', gap: 8 }}>
+          <button className="ghost-button" onClick={() => { resetForm(); setShowForm(true) }} type="button">
+            <Plus size={18} /> Add entry
           </button>
+          <button className="ghost-button" onClick={handleExport} type="button">
+            <Download size={18} /> Export
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+            <Calendar size={14} style={{ color: '#65737d' }} />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={{ fontSize: '0.8rem', padding: '4px 8px', borderRadius: 4, border: '1px solid #dfe6ea' }} />
+            <span style={{ color: '#65737d', fontSize: '0.8rem' }}>to</span>
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} style={{ fontSize: '0.8rem', padding: '4px 8px', borderRadius: 4, border: '1px solid #dfe6ea' }} />
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} style={{ fontSize: '0.8rem', padding: '4px 8px', borderRadius: 4, border: '1px solid #dfe6ea' }}>
+              <option value="">All Categories</option>
+              {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
           <span className="sync-pill">{items.length} entries</span>
         </div>
 
@@ -116,18 +187,25 @@ export function ExpensesPage() {
               { key: 'category', label: 'Category' },
               { key: 'income', label: 'Income' },
               { key: 'expenses', label: 'Expenses' },
+              { key: 'closing', label: 'Closing Bal' },
               { key: 'payment', label: 'Payment' },
               { key: 'person', label: 'Person' },
               { key: 'remark', label: 'Remark' },
+              { key: 'actions', label: 'Actions', sortable: false },
             ]}
             rows={items.map((item) => ({
               date: item.date,
               category: item.category,
               income: money(item.total_income),
               expenses: money(item.total_expenses),
+              closing: money(item.closing_balance),
               payment: item.payment_mode,
               person: item.person_name,
               remark: item.remark,
+              actions: <div style={{ display: 'flex', gap: 4 }}>
+                <button className="icon-button" onClick={() => beginEdit(item)} type="button" title="Edit"><Pencil size={15} /></button>
+                <button className="icon-button" onClick={() => void handleDelete(item.id)} type="button" title="Delete"><Trash2 size={15} /></button>
+              </div>,
             }))}
           />
         )}
@@ -138,21 +216,23 @@ export function ExpensesPage() {
           <div className="surface-heading">
             <div>
               <p className="section-label">Record</p>
-              <h2>New expense entry</h2>
+              <h2>{editingId ? 'Edit expense' : 'New expense entry'}</h2>
             </div>
             <Plus size={20} />
           </div>
 
-          <div className="field-row">
-            <label>
-              Date
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            </label>
-            <label>
-              Category
-              <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="e.g. Office Supplies" />
-            </label>
-          </div>
+          <label>
+            Date <span style={{ color: '#ef4444' }}>*</span>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+          </label>
+
+          <label>
+            Category <span style={{ color: '#ef4444' }}>*</span>
+            <input list="expense-categories" value={category} onChange={(e) => setCategory(e.target.value)} required placeholder="Select or type category" />
+            <datalist id="expense-categories">
+              {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </datalist>
+          </label>
 
           <div className="field-row">
             <label>
@@ -168,12 +248,7 @@ export function ExpensesPage() {
           <label>
             Payment mode
             <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)}>
-              <option value="">Select</option>
-              <option value="Cash">Cash</option>
-              <option value="UPI">UPI</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="Card">Card</option>
-              <option value="Cheque">Cheque</option>
+              {PAYMENT_MODES.map((m) => <option key={m} value={m}>{m || 'Select Mode'}</option>)}
             </select>
           </label>
 
@@ -188,8 +263,8 @@ export function ExpensesPage() {
           </label>
 
           <div className="form-actions">
-            <button className="ghost-button" onClick={() => setShowForm(false)} type="button">Cancel</button>
-            <button type="submit">Save entry</button>
+            <button className="ghost-button" onClick={() => { setShowForm(false); resetForm() }} type="button">Cancel</button>
+            <button type="submit">{editingId ? 'Update' : 'Save'}</button>
           </div>
         </form>
       ) : null}

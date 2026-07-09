@@ -149,6 +149,20 @@ class DashboardController extends Controller
         $today = now()->toDateString();
         $todayReports = Report::query()->whereDate('create_date', $today)->count();
 
+        $monthExpenses = DB::table('daily_expenses')
+            ->select(
+                'expenses_category',
+                DB::raw('SUM(CAST(total_expenses AS DECIMAL(12,2))) as total')
+            )
+            ->whereMonth('date', now()->month)
+            ->whereYear('date', now()->year)
+            ->where('total_expenses', '>', '0')
+            ->groupBy('expenses_category')
+            ->orderByDesc('total')
+            ->get()
+            ->pluck('total', 'expenses_category')
+            ->toArray();
+
         return response()->json([
             'monthly_registrations' => $monthlyRegistrations,
             'report_statuses' => [
@@ -158,6 +172,7 @@ class DashboardController extends Controller
                 'cancel' => (int) ($reportStatusCounts['Cancel'] ?? 0),
             ],
             'today_reports' => $todayReports,
+            'month_expenses' => $monthExpenses,
         ]);
     }
 }

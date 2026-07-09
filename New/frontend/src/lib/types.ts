@@ -76,25 +76,48 @@ export interface Registration {
   reporting_address: string
   mobile_no: string
   name_of_work: string
+  work_order_no?: string
+  reference?: string
+  work?: string
+  report_status?: string
   sample_details: string
   sample_details_1?: string
   sample_details_2?: string
   sample_details_3?: string
   sample_details_4?: string
+  new_back?: string
+  new_back_1?: string
+  new_back_2?: string
+  new_back_3?: string
+  new_back_4?: string
   total_payment: number
   advance_payment: number
   balance_dues: number
   payment_followup: string | null
   financial_remark: string | null
   mode_of_payment: string | null
+  gst_no?: string
+  sample_nos?: string
   remark: string | null
   qty: string | null
   qty_1?: string
   qty_2?: string
   qty_3?: string
   qty_4?: string
+  witness?: string
+  sample_test?: string
+  sample_remark?: string
+  report_no?: string
+  field_person_name?: string
+  prepared_date?: string
+  dispatch_date?: string
   assign_to: string | null
   report_copy: string | null
+  scan_copy?: string
+  scan_copy_1?: string
+  scan_copy_2?: string
+  scan_copy_3?: string
+  scan_copy_4?: string
   status: string
   color?: string
 }
@@ -106,21 +129,41 @@ export interface RegistrationFormData {
   reporting_address: string
   mobile_no: string
   name_of_work: string
+  work_order_no?: string
+  reference?: string
+  work?: string
+  report_status?: string
   sample_details: string
   sample_details_1?: string
   sample_details_2?: string
   sample_details_3?: string
   sample_details_4?: string
+  new_back?: string
+  new_back_1?: string
+  new_back_2?: string
+  new_back_3?: string
+  new_back_4?: string
   total_payment: string
   advance_payment: string
   balance_dues: string
   payment_followup: string
+  financial_remark?: string
+  mode_of_payment?: string
+  gst_no?: string
+  sample_nos?: string
   remark: string
   qty: string
   qty_1?: string
   qty_2?: string
   qty_3?: string
   qty_4?: string
+  witness?: string
+  sample_test?: string
+  sample_remark?: string
+  report_no?: string
+  field_person_name?: string
+  prepared_date?: string
+  dispatch_date?: string
   assign_to: string
 }
 

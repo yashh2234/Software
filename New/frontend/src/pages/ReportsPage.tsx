@@ -32,6 +32,8 @@ export function ReportsPage() {
   const [loading, setLoading] = useState(true)
   const [localError, setLocalError] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [assigning, setAssigning] = useState<number | null>(null)
   const [timelineReportId, setTimelineReportId] = useState<number | null>(null)
   const [timelineData, setTimelineData] = useState<Array<{ event: string; timestamp: string | null; icon: string; user?: string }>>([])
@@ -55,6 +57,8 @@ export function ReportsPage() {
     try {
       const params = new URLSearchParams()
       if (statusFilter) params.set('status', statusFilter)
+      if (startDate) params.set('start_date', startDate)
+      if (endDate) params.set('end_date', endDate)
       const data = await api.reports(`${activeType}?${params.toString()}` as any)
       setReports(data.data)
     } catch {
@@ -62,7 +66,7 @@ export function ReportsPage() {
     } finally {
       setLoading(false)
     }
-  }, [activeType, statusFilter])
+  }, [activeType, statusFilter, startDate, endDate])
 
   const loadUsers = useCallback(async () => {
     try {
@@ -263,7 +267,7 @@ export function ReportsPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
           {statusSteps.map((step) => {
             const count = step === 'Pending'
               ? activeTypeInfo?.pending
@@ -296,9 +300,19 @@ export function ReportsPage() {
           })}
           {statusFilter ? (
             <button type="button" onClick={() => setStatusFilter('')} style={{ padding: '6px 14px', borderRadius: 20, border: '1px solid #d0d7de', background: 'transparent', fontSize: '0.82rem', cursor: 'pointer' }}>
-              Clear
+              Clear Status
             </button>
           ) : null}
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center' }}>
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ padding: '5px 8px', border: '1px solid #dfe6ea', borderRadius: 6, fontSize: '0.82rem' }} />
+            <span style={{ color: '#65737d', fontSize: '0.82rem' }}>to</span>
+            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ padding: '5px 8px', border: '1px solid #dfe6ea', borderRadius: 6, fontSize: '0.82rem' }} />
+            {(startDate || endDate) && (
+              <button type="button" onClick={() => { setStartDate(''); setEndDate('') }} style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid #d0d7de', background: 'transparent', fontSize: '0.82rem', cursor: 'pointer' }}>
+                Clear Dates
+              </button>
+            )}
+          </div>
         </div>
 
         {localError ? <div className="error-banner">{localError}</div> : null}

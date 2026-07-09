@@ -76,4 +76,21 @@ class ExpenseController extends Controller
 
         return response()->json(['message' => 'Expense recorded'], 201);
     }
+
+    public function monthlySummary(): JsonResponse
+    {
+        $expenses = DB::table('daily_expenses')
+            ->select(
+                'expenses_category',
+                DB::raw('SUM(CAST(total_expenses AS DECIMAL(12,2))) as total')
+            )
+            ->whereMonth('date', now()->month)
+            ->whereYear('date', now()->year)
+            ->where('total_expenses', '>', '0')
+            ->groupBy('expenses_category')
+            ->orderByDesc('total')
+            ->get();
+
+        return response()->json(['data' => $expenses]);
+    }
 }

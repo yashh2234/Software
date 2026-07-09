@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ClipboardList, Check, UserCheck, FileText, AlertTriangle, Briefcase, Eye, ThumbsUp, CreditCard, Truck, Plus, FileEdit } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { MetricCard } from '../components/MetricCard'
-import { RegistrationTrendChart, MonthlyRevenueChart, ReportStatusChart } from '../components/Charts'
+import { RegistrationTrendChart, MonthlyRevenueChart, ReportStatusChart, ExpenseCategoryChart } from '../components/Charts'
 import { api, request } from '../lib/api'
 import { useTracking } from '../lib/useTracking'
 
@@ -43,6 +43,7 @@ export function DashboardPage() {
   const [trends, setTrends] = useState<TrendsData | null>(null)
   const [trendsLoading, setTrendsLoading] = useState(true)
   const [assignedCount, setAssignedCount] = useState(0)
+  const [monthExpenses, setMonthExpenses] = useState<Array<{ category: string; total: number }>>([])
 
   const role = detectRole(user?.permissions ?? [], user?.groups ?? [])
   const metrics = dashboard?.metrics ?? {}
@@ -65,10 +66,18 @@ export function DashboardPage() {
     } catch {}
   }, [])
 
+  const loadExpenses = useCallback(async () => {
+    try {
+      const data = await api.monthlyExpenses()
+      setMonthExpenses(data.data)
+    } catch {}
+  }, [])
+
   useEffect(() => {
     void loadTrends()
     void loadAssigned()
-  }, [loadTrends, loadAssigned])
+    void loadExpenses()
+  }, [loadTrends, loadAssigned, loadExpenses])
 
   // Job-based metric cards (always visible)
   const jobMetrics = [
@@ -235,6 +244,12 @@ export function DashboardPage() {
                 <MonthlyRevenueChart data={trends.monthly_registrations} />
               </section>
             </div>
+          ) : null}
+
+          {monthExpenses.length > 0 ? (
+            <section className="surface" style={{ marginTop: '1.25rem' }}>
+              <ExpenseCategoryChart data={monthExpenses} />
+            </section>
           ) : null}
 
           {/* Legacy summary */}

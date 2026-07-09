@@ -90,3 +90,29 @@ export function ReportStatusChart({ data }: ReportStatusProps) {
     </div>
   )
 }
+
+interface ExpenseData {
+  category: string
+  total: number
+}
+
+interface ExpenseChartProps {
+  data: ExpenseData[]
+}
+
+export function ExpenseCategoryChart({ data }: ExpenseChartProps) {
+  const chartData = data.map((d) => ({ category: d.category.length > 18 ? d.category.slice(0, 18) + '...' : d.category, amount: Number(d.total) }))
+  return (
+    <div className="chart-container">
+      <p className="section-label">Expenses</p>
+      <h3>Monthly expenses by category</h3>
+      {chartData.length === 0 ? (
+        <p style={{ textAlign: 'center', color: '#65737d', padding: '2rem 0', fontSize: '0.85rem' }}>No expenses this month</p>
+      ) : (
+        <Suspense fallback={<div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#65737d' }}>Loading chart...</div>}>
+          <LazyBarChart data={chartData} color={COLORS.secondary} dataKey="amount" />
+        </Suspense>
+      )}
+    </div>
+  )
+}

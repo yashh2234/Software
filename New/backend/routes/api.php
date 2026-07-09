@@ -115,6 +115,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('/expenses', [ExpenseController::class, 'index']);
     Route::post('/expenses', [ExpenseController::class, 'store']);
+    Route::get('/expenses/monthly-summary', [ExpenseController::class, 'monthlySummary']);
 
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
     Route::get('/purchase-orders/{id}/print', [PurchaseOrderController::class, 'printDiv']);
@@ -144,6 +145,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('final-reports/{id}', [FinalReportsController::class, 'destroy']);
 
     Route::apiResource('ulr-links', UlrLinkController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('ulr-links/export', [UlrLinkController::class, 'export']);
     Route::post('ulr-links/client-details', [UlrLinkController::class, 'getClientDetails']);
 
     Route::apiResource('stores', StoreController::class)->only(['index', 'store', 'update', 'destroy']);
