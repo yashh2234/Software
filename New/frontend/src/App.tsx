@@ -30,7 +30,7 @@ import OutsourcePage from './pages/OutsourcePage'
 import { AppShell } from './components/AppShell'
 import { useState } from 'react'
 import type { ModuleKey } from './lib/types'
-import { Briefcase, ClipboardList, FlaskConical, BarChart3, CreditCard, Building2, ShieldCheck, type LucideIcon } from 'lucide-react'
+import { Briefcase, ClipboardList, FlaskConical, BarChart3, CreditCard, Building2, ShieldCheck, Users, ReceiptText, Receipt, IndianRupee, FileText, Settings, ClipboardCheck, type LucideIcon } from 'lucide-react'
 
 interface NavItem {
   key: string
@@ -48,72 +48,104 @@ function AuthenticatedApp() {
 
   const groups: NavGroup[] = [
     {
-      label: 'Jobs',
+      label: 'UID Jobs',
       icon: Briefcase,
       items: [
-        { key: 'jobs', label: 'All Jobs' },
+        { key: 'jobs', label: 'UID Register' },
       ],
     },
     {
-      label: 'Sales',
+      label: 'Users',
+      icon: Users,
+      items: [
+        { key: 'users', label: 'Manage Users' },
+      ],
+    },
+    {
+      label: 'Groups',
+      icon: ShieldCheck,
+      items: [
+        { key: 'roles', label: 'Manage Groups' },
+        { key: 'permissions', label: 'Permissions' },
+      ],
+    },
+    {
+      label: 'Client Registration',
       icon: ClipboardList,
       items: [
-        { key: 'inquiries', label: 'Inquiry' },
-        { key: 'quotations', label: 'Quotation' },
-        { key: 'work_orders', label: 'Work Orders' },
+        { key: 'registrations', label: 'Manage Registration' },
       ],
     },
     {
-      label: 'Laboratory',
+      label: 'Lab Reports',
       icon: FlaskConical,
       items: [
-        { key: 'registrations', label: 'Registration' },
+        { key: 'reports', label: 'All Lab Reports' },
         { key: 'lab', label: 'Testing' },
         { key: 'outsource', label: 'Outsource' },
       ],
     },
     {
-      label: 'Reports',
-      icon: BarChart3,
+      label: 'Manage ULR',
+      icon: ClipboardList,
       items: [
-        { key: 'reports', label: 'All Reports' },
-        { key: 'due_reports', label: 'Due Reports' },
-        { key: 'final_reports', label: 'Final Reports' },
-      ],
-    },
-    {
-      label: 'Finance',
-      icon: CreditCard,
-      items: [
-        { key: 'billing', label: 'Billing' },
-        { key: 'invoices', label: 'Invoices' },
-        { key: 'dispatches', label: 'Dispatch' },
-        { key: 'expenses', label: 'Expenses' },
-        { key: 'purchase_orders', label: 'Purchase Orders' },
-      ],
-    },
-    {
-      label: 'Masters',
-      icon: Building2,
-      items: [
-        { key: 'clients', label: 'Clients' },
-        { key: 'users', label: 'Users' },
-        { key: 'stores', label: 'Stores' },
         { key: 'ulr_links', label: 'ULR Links' },
       ],
     },
     {
-      label: 'Administration',
-      icon: ShieldCheck,
+      label: 'Final Reports',
+      icon: ClipboardCheck,
       items: [
-        { key: 'roles', label: 'Roles' },
-        { key: 'permissions', label: 'Permissions' },
-        { key: 'workflow_templates', label: 'Workflows' },
+        { key: 'final_reports', label: 'All Final Reports' },
+      ],
+    },
+    {
+      label: 'Billing',
+      icon: ReceiptText,
+      items: [
+        { key: 'billing', label: 'All Bills' },
+        { key: 'due_reports', label: 'UID w/o Report' },
+      ],
+    },
+    {
+      label: 'Daily Expenses',
+      icon: IndianRupee,
+      items: [
+        { key: 'expenses', label: 'Manage Expenses' },
+      ],
+    },
+    {
+      label: 'Purchase Order',
+      icon: FileText,
+      items: [
+        { key: 'purchase_orders', label: 'Manage PO' },
+      ],
+    },
+    {
+      label: 'Invoice',
+      icon: Receipt,
+      items: [
+        { key: 'invoices', label: 'Manage Invoice' },
+      ],
+    },
+    {
+      label: 'Company',
+      icon: Building2,
+      items: [
+        { key: 'settings', label: 'Company Settings' },
+      ],
+    },
+    {
+      label: 'Setting',
+      icon: Settings,
+      items: [
+        { key: 'stores', label: 'Stores' },
         { key: 'documents', label: 'Documents' },
+        { key: 'dispatches', label: 'Dispatch' },
+        { key: 'workflow_templates', label: 'Workflows' },
         { key: 'analytics', label: 'Analytics' },
         { key: 'audit', label: 'Audit Log' },
         { key: 'user_tracking', label: 'User Tracking' },
-        { key: 'settings', label: 'Settings' },
       ],
     },
   ]

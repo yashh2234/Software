@@ -89,7 +89,7 @@ export function AppShell({ groups, activeModule, onModuleChange, children }: App
   const [showNotifs, setShowNotifs] = useState(false)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
     const saved = localStorage.getItem('nav_expanded')
-    return saved ? new Set(JSON.parse(saved)) : new Set(['Sales', 'Laboratory', 'Reports', 'Finance', 'Masters', 'Administration'])
+    return saved ? new Set(JSON.parse(saved)) : new Set(['Client Registration', 'Lab Reports', 'Billing', 'Groups', 'Setting'])
   })
   const searchRef = useRef<HTMLDivElement>(null)
   const notifRef = useRef<HTMLDivElement>(null)
