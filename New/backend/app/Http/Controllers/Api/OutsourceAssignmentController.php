@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\OutsourceAssignment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class OutsourceAssignmentController extends Controller
 {
@@ -91,5 +92,25 @@ class OutsourceAssignmentController extends Controller
     {
         $outsourceAssignment->delete();
         return response()->json(['message' => 'Outsource assignment deleted']);
+    }
+
+    public function uploadVendorReport(Request $request, OutsourceAssignment $outsourceAssignment)
+    {
+        $validated = $request->validate([
+            'vendor_report' => 'required|file|mimes:pdf,doc,docx,xlsx,xls,jpg,jpeg,png|max:20480',
+        ]);
+
+        $path = $request->file('vendor_report')->store('vendor-reports', 'public');
+
+        $outsourceAssignment->update([
+            'vendor_report' => $path,
+            'status' => 'completed',
+            'completed_at' => $outsourceAssignment->completed_at ?? now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Vendor report uploaded',
+            'assignment' => $outsourceAssignment->fresh(),
+        ]);
     }
 }

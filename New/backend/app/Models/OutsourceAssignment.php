@@ -14,7 +14,7 @@ class OutsourceAssignment extends Model
         'party_email', 'scope_of_work', 'agreed_amount', 'payment_status',
         'payment_amount', 'payment_date', 'payment_reference',
         'status', 'started_at', 'completed_at', 'completion_details',
-        'delivery_date', 'notes', 'assigned_by',
+        'delivery_date', 'notes', 'assigned_by', 'vendor_report',
     ];
 
     protected $casts = [

@@ -16,7 +16,7 @@ class Registration extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'iClientId', 'client_id', 'sno', 'uid_no', 'ulr_no', 'month',
+        'iClientId', 'client_id', 'job_id', 'sno', 'uid_no', 'ulr_no', 'month',
         'received_date', 'agency_name', 'mobile_no', 'reporting_address',
         'name_of_work', 'work', 'work_order_no', 'reference', 'dist',
         'payment_followup', 'advance_payment', 'balance_dues', 'total_payment',
@@ -38,5 +38,10 @@ class Registration extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');
+    }
+
+    public function job(): BelongsTo
+    {
+        return $this->belongsTo(\App\Jobs::class, 'job_id');
     }
 }

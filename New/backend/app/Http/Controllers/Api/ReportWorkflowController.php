@@ -38,7 +38,7 @@ class ReportWorkflowController extends Controller
                     'uid_no' => $r->uid_no,
                     'type' => $r->report_type,
                     'status' => $r->status,
-                    'workflow_status' => $r->workflow_status ?? 'draft',
+                    'workflow_status' => $r->status,
                     'created_at' => $r->create_date,
                     'assigned_to' => $r->assigned_to,
                     'approved_at' => $r->approved_at,
@@ -62,7 +62,7 @@ class ReportWorkflowController extends Controller
 
         $existing = Report::where('job_id', $job->id)
             ->where('report_type', $validated['report_type'])
-            ->where('workflow_status', 'draft')
+            ->where('status', 'Draft')
             ->first();
 
         if ($existing) {
@@ -78,7 +78,6 @@ class ReportWorkflowController extends Controller
             'material_details' => $validated['material_details'] ?? '',
             'work_order_no' => $job->uid_no,
             'status' => 'Draft',
-            'workflow_status' => 'draft',
             'user_id' => $request->user()?->id,
             'created_by' => $request->user()?->id,
             'create_date' => now(),
@@ -103,7 +102,7 @@ class ReportWorkflowController extends Controller
             'observations' => 'required|array',
         ]);
 
-        if ($report->workflow_status === 'locked') {
+        if ($report->status === 'Complete') {
             return response()->json(['message' => 'Cannot edit a locked report'], 422);
         }
 
@@ -121,12 +120,11 @@ class ReportWorkflowController extends Controller
      */
     public function submitForReview(Request $request, Report $report)
     {
-        if ($report->workflow_status !== 'draft' && $report->workflow_status !== 'corrections_requested') {
+        if ($report->status !== 'Draft' && $report->status !== 'Corrections Requested') {
             return response()->json(['message' => 'Report must be in draft or corrections state'], 422);
         }
 
         $report->update([
-            'workflow_status' => 'under_review',
             'status' => 'Under Review',
             'submitted_at' => now(),
             'updated_by' => $request->user()?->id,
@@ -150,12 +148,11 @@ class ReportWorkflowController extends Controller
      */
     public function approve(Request $request, Report $report)
     {
-        if ($report->workflow_status !== 'under_review') {
+        if ($report->status !== 'Under Review') {
             return response()->json(['message' => 'Report must be under review'], 422);
         }
 
         $report->update([
-            'workflow_status' => 'approved',
             'status' => 'Approved',
             'approved_at' => now(),
             'approved_by' => $request->user()?->id,
@@ -182,12 +179,11 @@ class ReportWorkflowController extends Controller
     {
         $validated = $request->validate(['remarks' => 'nullable|string|max:2000']);
 
-        if ($report->workflow_status !== 'under_review') {
+        if ($report->status !== 'Under Review') {
             return response()->json(['message' => 'Report must be under review'], 422);
         }
 
         $report->update([
-            'workflow_status' => 'corrections_requested',
             'status' => 'Corrections Requested',
             'updated_by' => $request->user()?->id,
         ]);
@@ -214,12 +210,11 @@ class ReportWorkflowController extends Controller
      */
     public function lock(Request $request, Report $report)
     {
-        if ($report->workflow_status !== 'approved') {
+        if ($report->status !== 'Approved') {
             return response()->json(['message' => 'Only approved reports can be locked'], 422);
         }
 
         $report->update([
-            'workflow_status' => 'locked',
             'status' => 'Complete',
             'locked_at' => now(),
             'locked_by' => $request->user()?->id,

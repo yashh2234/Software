@@ -31,7 +31,6 @@ class Report extends Model
         'environment_condition',
         'report_type',
         'status',
-        'workflow_status',
         'cancel_remark',
         'user_id',
         'updated_by',
@@ -90,5 +89,10 @@ class Report extends Model
     public function lockedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'locked_by');
+    }
+
+    public function getWorkflowStatusAttribute(): ?string
+    {
+        return $this->status;
     }
 }

@@ -19,7 +19,7 @@ class CheckStagePermission
             return $next($request);
         }
 
-        $userPermissions = $user->permissions ?? [];
+        $userPermissions = method_exists($user, 'legacyPermissions') ? $user->legacyPermissions() : [];
 
         if (!in_array($permission, $userPermissions, true)) {
             $stagePermissions = [

@@ -46,6 +46,7 @@ export default function QuotationsPage() {
   const [items, setItems] = useState<QuotationItem[]>([
     { description: '', quantity: 1, unit: 'nos', rate: 0, amount: 0 },
   ]);
+  const [converting, setConverting] = useState<number | null>(null);
 
   const fetchQuotations = async () => {
     setLoading(true);
@@ -125,6 +126,16 @@ export default function QuotationsPage() {
     fetchQuotations();
   };
 
+  const handleConvertToWorkOrder = async (id: number) => {
+    setConverting(id);
+    try {
+      const res = await fetch(`/api/quotations/${id}/convert-to-work-order`, { method: 'POST' });
+      if (!res.ok) { const err = await res.json(); alert(err.message || 'Conversion failed'); }
+      fetchQuotations();
+    } catch { alert('Conversion failed'); }
+    setConverting(null);
+  };
+
   return (
     <div className="page-container">
       <div className="page-header">
@@ -185,6 +196,10 @@ export default function QuotationsPage() {
                   {q.status === 'sent' && (
                     <button className="btn btn-sm" style={{ backgroundColor: '#4caf50', color: '#fff' }}
                       onClick={() => handleStatusChange(q.id, 'accepted')}>Accept</button>
+                  )}
+                  {q.status === 'accepted' && (
+                    <button className="btn btn-sm" style={{ backgroundColor: '#8b5cf6', color: '#fff' }}
+                      onClick={() => handleConvertToWorkOrder(q.id)}>{converting === q.id ? 'Converting...' : 'Work Order'}</button>
                   )}
                 </td>
               </tr>

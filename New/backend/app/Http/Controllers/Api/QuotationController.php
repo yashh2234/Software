@@ -3,8 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Jobs;
 use App\Models\Quotation;
 use App\Models\QuotationItem;
+use App\Models\WorkOrder;
+use App\Models\WorkflowStage;
+use App\Models\WorkflowTemplate;
+use App\Models\WorkflowTransition;
+use App\Services\WorkflowEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -164,6 +170,67 @@ class QuotationController extends Controller
         $quotation->items()->delete();
         $quotation->delete();
         return response()->json(['message' => 'Quotation deleted']);
+    }
+
+    public function convertToWorkOrder(Quotation $quotation)
+    {
+        if ($quotation->status !== 'accepted') {
+            return response()->json(['message' => 'Only accepted quotations can be converted to work orders'], 422);
+        }
+
+        $template = WorkflowTemplate::where('is_active', true)->first();
+        if (!$template) {
+            return response()->json(['message' => 'No active workflow template found'], 500);
+        }
+
+        return DB::transaction(function () use ($quotation, $template) {
+            $workOrder = WorkOrder::create([
+                'quotation_id' => $quotation->id,
+                'work_order_no' => WorkOrder::generateWorkOrderNo(),
+                'client_name' => $quotation->client_name,
+                'agency_name' => $quotation->agency_name,
+                'date' => now(),
+                'total_amount' => $quotation->net_amount,
+                'status' => 'active',
+                'created_by' => auth()->id(),
+            ]);
+
+            $uidNo = $workOrder->work_order_no;
+            $job = Jobs::firstOrCreate(
+                ['uid_no' => $uidNo],
+                [
+                    'title' => 'Work Order ' . $uidNo,
+                    'priority' => 'normal',
+                    'workflow_template_id' => $template->id,
+                    'created_by' => auth()->id(),
+                    'status' => 'pending',
+                ]
+            );
+
+            if ($job->wasRecentlyCreated) {
+                app(WorkflowEngine::class)->startJob($job, auth()->user());
+            }
+
+            $woStage = WorkflowStage::where('template_id', $template->id)
+                ->where('slug', 'work-order')->first();
+            if ($woStage && $job->current_stage_id !== $woStage->id) {
+                $transition = WorkflowTransition::where('template_id', $template->id)
+                    ->where('from_stage_id', $job->current_stage_id)
+                    ->where('to_stage_id', $woStage->id)
+                    ->first();
+                if ($transition) {
+                    app(WorkflowEngine::class)->transition($job, $transition, auth()->user(), 'Converted from quotation');
+                }
+            }
+
+            $quotation->update(['status' => 'converted']);
+
+            return response()->json([
+                'message' => 'Work order created successfully',
+                'work_order' => $workOrder->fresh(),
+                'job_id' => $job->id,
+            ], 201);
+        });
     }
 
     public function printDiv(Quotation $quotation)

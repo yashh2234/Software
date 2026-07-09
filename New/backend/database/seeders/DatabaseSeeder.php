@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        \App\Services\WorkflowEngine::seedDefaultWorkflow();
+
         User::query()->updateOrCreate([
             'email' => 'admin@admin.com',
         ], [

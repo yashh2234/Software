@@ -330,6 +330,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::put('{quotation}', [QuotationController::class, 'update']);
         Route::delete('{quotation}', [QuotationController::class, 'destroy']);
         Route::get('{quotation}/print', [QuotationController::class, 'printDiv']);
+        Route::post('{quotation}/convert-to-work-order', [QuotationController::class, 'convertToWorkOrder']);
     });
 
     Route::prefix('work-orders')->group(function (): void {
@@ -355,6 +356,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::get('{outsourceAssignment}', [OutsourceAssignmentController::class, 'show']);
         Route::put('{outsourceAssignment}', [OutsourceAssignmentController::class, 'update']);
         Route::delete('{outsourceAssignment}', [OutsourceAssignmentController::class, 'destroy']);
+        Route::post('{outsourceAssignment}/upload-vendor-report', [OutsourceAssignmentController::class, 'uploadVendorReport']);
     });
 
     Route::prefix('analytics')->group(function (): void {

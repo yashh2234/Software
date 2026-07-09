@@ -170,7 +170,7 @@ class RegistrationController extends Controller
             'created_at' => now(),
         ]);
 
-        $this->syncJobFromRegistration($registration->uid_no, $request);
+        $this->syncJobFromRegistration($registration, $request);
 
         return response()->json([
             'message' => 'Registration created successfully',
@@ -234,7 +234,7 @@ class RegistrationController extends Controller
 
         abort_if(! $registration, 404, 'Registration not found');
 
-        $this->syncJobFromRegistration($registration->uid_no, $request);
+        $this->syncJobFromRegistration($registration, $request);
 
         return response()->json([
             'message' => 'Registration updated successfully',
@@ -387,13 +387,14 @@ class RegistrationController extends Controller
         ]);
     }
 
-    protected function syncJobFromRegistration(string $uidNo, Request $request): void
+    protected function syncJobFromRegistration(object $registration, Request $request): void
     {
         $template = WorkflowTemplate::where('is_active', true)->first();
         if (!$template) return;
 
-        $existingJob = JobsModel::where('uid_no', $uidNo)->first();
+        $existingJob = JobsModel::where('uid_no', $registration->uid_no)->first();
         if ($existingJob) {
+            $this->linkJobToRegistration($registration, $existingJob);
             $regStage = WorkflowStage::where('template_id', $template->id)
                 ->where('slug', 'registration')->first();
             if ($regStage && $existingJob->current_stage_id !== $regStage->id) {
@@ -411,13 +412,15 @@ class RegistrationController extends Controller
         }
 
         $job = JobsModel::create([
-            'uid_no' => $uidNo,
-            'title' => 'Registration ' . $uidNo,
+            'uid_no' => $registration->uid_no,
+            'title' => 'Registration ' . $registration->uid_no,
             'priority' => 'normal',
             'workflow_template_id' => $template->id,
             'created_by' => $request->user()?->id,
             'status' => 'pending',
         ]);
+
+        $this->linkJobToRegistration($registration, $job);
 
         app(WorkflowEngine::class)->startJob($job, $request->user());
 
@@ -434,6 +437,13 @@ class RegistrationController extends Controller
                 );
             }
         }
+    }
+
+    protected function linkJobToRegistration(object $registration, JobsModel $job): void
+    {
+        DB::table('client_registration')
+            ->where('iClientId', $registration->iClientId)
+            ->update(['job_id' => $job->id]);
     }
 
     private function normalizeLegacyDate(mixed $value): string
