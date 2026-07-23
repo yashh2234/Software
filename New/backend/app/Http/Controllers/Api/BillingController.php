@@ -7,11 +7,19 @@ use App\Models\Billing;
 use App\Models\Jobs;
 use App\Models\Registration;
 use App\Models\SmsReminderLog;
+use App\Services\WorkflowBridge;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BillingController extends Controller
 {
+    protected WorkflowBridge $bridge;
+
+    public function __construct(WorkflowBridge $bridge)
+    {
+        $this->bridge = $bridge;
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = Billing::query()
@@ -107,6 +115,57 @@ class BillingController extends Controller
         ]);
     }
 
+    public function dueAttached(Request $request): JsonResponse
+    {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $query = Registration::query()
+            ->where('balance_dues', '>', 0)
+            ->where(function ($q) {
+                $q->whereNotNull('report_copy')->where('report_copy', '!=', '');
+            });
+
+        if ($startDate && $endDate) {
+            $query->whereDate('received_date', '>=', $startDate)
+                ->whereDate('received_date', '<=', $endDate);
+        }
+
+        $bills = $query->orderByDesc('received_date')->orderByDesc('iClientId')->get();
+
+        return response()->json([
+            'count' => $bills->count(),
+            'total_due' => $bills->sum('balance_dues'),
+            'data' => $bills,
+        ]);
+    }
+
+    public function notUpdated(Request $request): JsonResponse
+    {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $query = Registration::query()
+            ->where(function ($q) {
+                $q->whereNull('total_payment')
+                  ->orWhere('total_payment', '')
+                  ->orWhere('total_payment', '0')
+                  ->orWhere('total_payment', '0.00');
+            });
+
+        if ($startDate && $endDate) {
+            $query->whereDate('received_date', '>=', $startDate)
+                ->whereDate('received_date', '<=', $endDate);
+        }
+
+        $bills = $query->orderByDesc('received_date')->orderByDesc('iClientId')->get();
+
+        return response()->json([
+            'count' => $bills->count(),
+            'data' => $bills,
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -124,6 +183,14 @@ class BillingController extends Controller
         ]);
 
         $billing = Billing::create($validated);
+
+        // Advance workflow job to 'billing' stage
+        $this->bridge->advanceToStage(
+            $validated['uid_no'],
+            'billing',
+            $request->user(),
+            "Billing record created: {$validated['bill_no']}"
+        );
 
         return response()->json(['message' => 'Billing record created', 'data' => $billing], 201);
     }
@@ -332,5 +399,103 @@ class BillingController extends Controller
             ->get();
 
         return response()->json(['data' => $logs]);
+    }
+
+    public function paymentNotUpdated(Request $request): JsonResponse
+    {
+        $query = Registration::query()
+            ->where(function ($q): void {
+                $q->whereNull('total_payment')
+                    ->orWhere('total_payment', '')
+                    ->orWhere('total_payment', '0');
+            })
+            ->where(function ($q): void {
+                $q->whereNull('balance_dues')
+                    ->orWhere('balance_dues', '')
+                    ->orWhere('balance_dues', '0');
+            });
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereDate('received_date', '>=', $request->start_date)
+                ->whereDate('received_date', '<=', $request->end_date);
+        }
+
+        $registrations = $query
+            ->orderByDesc('received_date')
+            ->orderByDesc('iClientId')
+            ->limit(200)
+            ->get()
+            ->map(function (Registration $r): array {
+                return [
+                    'id' => $r->iClientId,
+                    'uid_no' => $r->uid_no,
+                    'received_date' => optional($r->received_date)->format('d/m/Y'),
+                    'agency_name' => $r->agency_name,
+                    'reporting_address' => $r->reporting_address,
+                    'mobile_no' => $r->mobile_no,
+                    'total_payment' => (float) ($r->total_payment ?: 0),
+                    'advance_payment' => (float) ($r->advance_payment ?: 0),
+                    'balance_dues' => (float) ($r->balance_dues ?: 0),
+                    'payment_followup' => $r->payment_followup,
+                    'remark' => $r->remark,
+                    'sample_details' => $r->sample_details,
+                    'qty' => $r->qty,
+                    'status' => 'Payment Not Updated',
+                    'color' => 'red',
+                ];
+            });
+
+        return response()->json([
+            'count' => $registrations->count(),
+            'data' => $registrations,
+        ]);
+    }
+
+    public function export(Request $request): JsonResponse
+    {
+        $query = Registration::query();
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereDate('received_date', '>=', $request->start_date)
+                ->whereDate('received_date', '<=', $request->end_date);
+        }
+
+        $data = $query
+            ->orderByDesc('iClientId')
+            ->limit(5000)
+            ->get()
+            ->map(function (Registration $r): array {
+                $totalPayment = (float) ($r->total_payment ?: 0);
+                $advancePayment = (float) ($r->advance_payment ?: 0);
+                $balanceDues = (float) ($r->balance_dues ?: 0);
+
+                $status = 'Due';
+                if ($balanceDues === 0.0 && $totalPayment > 0) {
+                    $status = 'Paid';
+                } elseif ($balanceDues > 0 && $totalPayment > 0) {
+                    $status = 'Partial';
+                } elseif ($totalPayment === 0.0) {
+                    $status = 'Payment Not Updated';
+                }
+
+                return [
+                    'uid_no' => $r->uid_no,
+                    'received_date' => optional($r->received_date)->format('d/m/Y'),
+                    'agency_name' => $r->agency_name,
+                    'reporting_address' => $r->reporting_address,
+                    'mobile_no' => $r->mobile_no,
+                    'total_payment' => $totalPayment,
+                    'advance_payment' => $advancePayment,
+                    'balance_dues' => $balanceDues,
+                    'payment_followup' => $r->payment_followup,
+                    'financial_remark' => $r->financial_remark,
+                    'mode_of_payment' => $r->mode_of_payment,
+                    'sample_details' => $r->sample_details,
+                    'qty' => $r->qty,
+                    'status' => $status,
+                ];
+            });
+
+        return response()->json(['data' => $data]);
     }
 }

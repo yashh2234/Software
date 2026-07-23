@@ -48,9 +48,6 @@ class Report extends Model
     ];
 
     protected $casts = [
-        'sample_date' => 'date',
-        'sample_tested_date' => 'date',
-        'dispatch_date' => 'date',
         'create_date' => 'datetime',
         'updated_date' => 'datetime',
         'assigned_at' => 'datetime',
@@ -94,5 +91,31 @@ class Report extends Model
     public function getWorkflowStatusAttribute(): ?string
     {
         return $this->status;
+    }
+
+    public function getSampleDateAttribute($value)
+    {
+        return $this->parseLegacyDate($value);
+    }
+
+    public function getSampleTestedDateAttribute($value)
+    {
+        return $this->parseLegacyDate($value);
+    }
+
+    public function getDispatchDateAttribute($value)
+    {
+        return $this->parseLegacyDate($value);
+    }
+
+    protected function parseLegacyDate($value)
+    {
+        if (empty($value)) return null;
+        if (preg_match('/^\d{4}-\d{2}-\d{2}/', $value)) return substr($value, 0, 10);
+        try {
+            return \Carbon\Carbon::createFromFormat('d/m/Y', $value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return $value;
+        }
     }
 }

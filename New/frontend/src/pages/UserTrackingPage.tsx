@@ -64,7 +64,7 @@ export function UserTrackingPage() {
     try {
       const data = await api.userActivity(userId)
       setUserInfo(data.user)
-      setActivities(data.activities)
+      setActivities((data.activities || []).filter((a: any) => a.action !== 'page_visit'))
       setTotalToday(data.total_today)
     } catch {}
   }, [])

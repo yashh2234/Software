@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, type FormEvent } from 'react'
-import { ClipboardList, ArrowLeft, ArrowRight, Save, Plus, X, Building2, FlaskConical, Beaker, Paperclip, MessageSquareText, Briefcase, FileText } from 'lucide-react'
+import { ClipboardList, ArrowLeft, ArrowRight, Save, Plus, X, Building2, FlaskConical, Paperclip, MessageSquareText, Briefcase } from 'lucide-react'
 import type { RegistrationFormData } from '../lib/types'
 import { api, request } from '../lib/api'
 import { FormField, DatePicker } from './ui'

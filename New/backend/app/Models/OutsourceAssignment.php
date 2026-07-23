@@ -18,12 +18,8 @@ class OutsourceAssignment extends Model
     ];
 
     protected $casts = [
-        'agreed_amount' => 'decimal:2',
-        'payment_amount' => 'decimal:2',
-        'payment_date' => 'date',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
-        'delivery_date' => 'date',
     ];
 
     public function workOrder(): BelongsTo

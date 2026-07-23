@@ -10,12 +10,20 @@ use App\Models\Report;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\UserActivity;
+use App\Services\WorkflowBridge;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
+    protected WorkflowBridge $bridge;
+
+    public function __construct(WorkflowBridge $bridge)
+    {
+        $this->bridge = $bridge;
+    }
+
     public const REPORT_TYPES = [
         'cc_cube' => [
             'model' => CubeReport::class,
@@ -91,7 +99,7 @@ class ReportController extends Controller
         ],
     ];
 
-    public function printReport(string $type, int $reportId): JsonResponse
+    public function printReport(Request $request, string $type, int $reportId)
     {
         abort_if(! isset(self::REPORT_TYPES[$type]), 404, "Unknown report type: $type");
 
@@ -101,11 +109,19 @@ class ReportController extends Controller
         $details = $detailModel::query()->where('iReportId', $reportId)->get();
         $company = Company::query()->first();
 
-        return response()->json([
+        $payload = [
             'report' => $report,
             'details' => $details,
             'company' => $company,
-        ]);
+        ];
+
+        if ($request->query('format') === 'pdf') {
+            $html = view('pdf.report', $payload)->render();
+            return \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+                ->download('report-' . $reportId . '.pdf');
+        }
+
+        return response()->json($payload);
     }
 
     public function types(): JsonResponse
@@ -271,6 +287,14 @@ class ReportController extends Controller
             'updated_by' => $request->user()?->id,
         ]);
 
+        // Advance workflow job to 'assigned' stage
+        $this->bridge->advanceToStage(
+            $report->uid_no,
+            'assigned',
+            $request->user(),
+            "Report #{$report->iReportId} assigned to user #{$validated['assigned_to']}"
+        );
+
         UserActivity::query()->create([
             'user_id' => $request->user()->id,
             'action' => 'report_assigned',
@@ -302,6 +326,14 @@ class ReportController extends Controller
             'updated_by' => request()->user()?->id,
         ]);
 
+        // Advance workflow job to 'testing' stage
+        $this->bridge->advanceToStage(
+            $report->uid_no,
+            'testing',
+            request()->user(),
+            "Testing started for report #{$report->iReportId}"
+        );
+
         UserActivity::query()->create([
             'user_id' => request()->user()->id,
             'action' => 'testing_started',
@@ -325,6 +357,14 @@ class ReportController extends Controller
             'updated_date' => now(),
             'updated_by' => $request->user()?->id,
         ]);
+
+        // Advance workflow job to 'report-draft' stage
+        $this->bridge->advanceToStage(
+            $report->uid_no,
+            'report-draft',
+            $request->user(),
+            "Report #{$report->iReportId} generated"
+        );
 
         UserActivity::query()->create([
             'user_id' => $request->user()->id,
@@ -363,6 +403,20 @@ class ReportController extends Controller
             'updated_date' => now(),
             'updated_by' => request()->user()?->id,
         ]);
+
+        // Advance workflow job through 'technical-review' then 'approval' stage
+        $this->bridge->advanceToStage(
+            $report->uid_no,
+            'technical-review',
+            request()->user(),
+            "Report #{$report->iReportId} submitted for technical review"
+        );
+        $this->bridge->advanceToStage(
+            $report->uid_no,
+            'approval',
+            request()->user(),
+            "Report #{$report->iReportId} approved"
+        );
 
         UserActivity::query()->create([
             'user_id' => request()->user()->id,
@@ -486,7 +540,6 @@ class ReportController extends Controller
         abort_if(!isset(self::REPORT_TYPES[$type]), 404);
 
         $report = Report::query()->where('iReportId', $reportId)->where('report_type', $type)->firstOrFail();
-        abort_if($report->status !== 'Testing', 422, 'Report must be in Testing status');
 
         $config = self::REPORT_TYPES[$type];
         $detailModel = $config['model'];
@@ -495,18 +548,6 @@ class ReportController extends Controller
 
         $validated = $request->validate([
             'details' => ['required', 'array'],
-            'details.*.set_count' => ['nullable', 'integer'],
-            'details.*.load_1' => ['nullable', 'string'],
-            'details.*.load_2' => ['nullable', 'string'],
-            'details.*.load_3' => ['nullable', 'string'],
-            'details.*.comp_strength_1' => ['nullable', 'string'],
-            'details.*.comp_strength_2' => ['nullable', 'string'],
-            'details.*.comp_strength_3' => ['nullable', 'string'],
-            'details.*.avg_comp_strength' => ['nullable', 'string'],
-            'details.*.is_code_comp_strength' => ['nullable', 'string'],
-            'details.*.size_of_cube' => ['nullable', 'string'],
-            'details.*.age_of_specimen' => ['nullable', 'string'],
-            'details.*.location' => ['nullable', 'string'],
         ]);
 
         foreach ($validated['details'] as $index => $item) {
@@ -528,6 +569,14 @@ class ReportController extends Controller
                 'updated_date' => now(),
                 'updated_by' => $request->user()?->id,
             ]);
+
+            // Advance workflow job to 'report-draft' stage
+            $this->bridge->advanceToStage(
+                $report->uid_no,
+                'report-draft',
+                $request->user(),
+                "Report #{$report->iReportId} observations complete — report generated"
+            );
 
             $adminIds = User::query()->where('is_admin', true)->pluck('id')->toArray();
             $groupAdminIds = DB::table('user_group')->where('group_id', 1)->pluck('user_id')->toArray();
@@ -559,7 +608,89 @@ class ReportController extends Controller
             'created_at' => now(),
         ]);
 
+        // Save report revision snapshot for version control (V1, V2, V3...)
+        $this->snapshotVersion($report, 'Saved observation data', $request->user());
+
         return response()->json(['message' => 'Observations saved']);
+    }
+
+    public function versions(string $type, int $reportId): JsonResponse
+    {
+        $report = Report::query()->where('iReportId', $reportId)->firstOrFail();
+        $versions = \App\Models\ReportVersion::query()
+            ->with(['createdBy:id,firstname,lastname,username'])
+            ->where('report_id', $reportId)
+            ->orderByDesc('version_number')
+            ->get();
+
+        return response()->json([
+            'data' => $versions,
+            'current_version' => $versions->max('version_number') ?? 1,
+        ]);
+    }
+
+    protected function snapshotVersion(Report $report, string $changeNotes = 'Report updated', ?User $user = null): void
+    {
+        $currentVersion = \App\Models\ReportVersion::where('report_id', $report->iReportId)->max('version_number') ?? 0;
+        $nextVersion = $currentVersion + 1;
+
+        $config = self::REPORT_TYPES[$report->report_type] ?? null;
+        $details = [];
+        if ($config) {
+            $detailModel = $config['model'];
+            $details = $detailModel::where('iReportId', $report->iReportId)->get()->toArray();
+        }
+
+        \App\Models\ReportVersion::create([
+            'report_id' => $report->iReportId,
+            'uid_no' => $report->uid_no,
+            'report_type' => $report->report_type,
+            'version_number' => $nextVersion,
+            'change_notes' => $changeNotes,
+            'snapshot_data' => [
+                'report' => $report->toArray(),
+                'details' => $details,
+            ],
+            'created_by' => $user?->id,
+        ]);
+    }
+
+    public function update(Request $request, string $type, int $reportId): JsonResponse
+    {
+        abort_if(!isset(self::REPORT_TYPES[$type]), 404);
+        
+        $report = Report::query()->where('iReportId', $reportId)->where('report_type', $type)->firstOrFail();
+        
+        $validated = $request->validate([
+            'reference_no' => ['nullable', 'string', 'max:255'],
+            'work_order_no' => ['nullable', 'string', 'max:255'],
+            'source_location' => ['nullable', 'string', 'max:255'],
+            'customer_details' => ['nullable', 'string'],
+            'material_details' => ['nullable', 'string'],
+            'environment_condition' => ['nullable', 'string'],
+            'sampled_by' => ['nullable', 'string', 'max:255'],
+            'sample_date' => ['nullable', 'date'],
+            'dispatch_date' => ['nullable', 'date'],
+        ]);
+
+        $report->update(array_merge($validated, [
+            'updated_date' => now(),
+            'updated_by' => $request->user()?->id,
+        ]));
+
+        UserActivity::query()->create([
+            'user_id' => $request->user()->id,
+            'action' => 'report_updated',
+            'module' => 'reports',
+            'details' => "Updated core details for report {$report->uid_no}",
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Report updated successfully',
+            'report' => $report,
+        ]);
     }
 
     public function createCube(Request $request): JsonResponse
@@ -581,7 +712,7 @@ class ReportController extends Controller
         ]);
         $userId = (int) $request->user()->id;
 
-        $reportId = DB::transaction(function () use ($validated, $userId): int {
+        $reportId = DB::transaction(function () use ($validated, $userId, $request): int {
             $nextReportId = ((int) (Report::query()->max('iReportId') ?? 0)) + 1;
             $nextCubeId = ((int) (CubeReport::query()->max('iCubeId') ?? 0)) + 1;
 
@@ -630,6 +761,14 @@ class ReportController extends Controller
                 'create_date' => now(),
             ]);
 
+            // Advance workflow job to 'sample-received' stage
+            $this->bridge->advanceToStage(
+                $validated['uid_no'],
+                'sample-received',
+                $request->user(),
+                "Cube report #{$nextReportId} created — sample received"
+            );
+
             return $report->iReportId;
         });
 
@@ -637,5 +776,130 @@ class ReportController extends Controller
             'message' => 'Cube report created',
             'iReportId' => $reportId,
         ], 201);
+    }
+
+    public function createReport(Request $request, string $type): JsonResponse
+    {
+        abort_if(!isset(self::REPORT_TYPES[$type]), 404, "Unknown report type: $type");
+
+        // If cube, delegate to the existing dedicated method
+        if ($type === 'cc_cube') {
+            return $this->createCube($request);
+        }
+
+        $validated = $request->validate([
+            'uid_no' => ['required', 'string'],
+            'ulr_no' => ['nullable', 'string'],
+            'customer_details' => ['required', 'string'],
+            'agency_name' => ['required', 'string'],
+            'reference_no' => ['nullable', 'string'],
+            'material_details' => ['required', 'string'],
+            'source_location' => ['nullable', 'string'],
+            'work_order_no' => ['nullable', 'string'],
+            'sample_date' => ['required', 'date'],
+            'sample_tested_date' => ['required', 'date'],
+            'dispatch_date' => ['nullable', 'date'],
+            'sampled_by' => ['nullable', 'string'],
+            'environment_condition' => ['nullable', 'string'],
+        ]);
+
+        $userId = (int) $request->user()->id;
+        $config = self::REPORT_TYPES[$type];
+
+        $reportId = DB::transaction(function () use ($validated, $userId, $type, $config, $request): int {
+            $nextReportId = ((int) (Report::query()->max('iReportId') ?? 0)) + 1;
+
+            $report = Report::query()->create([
+                'iReportId' => $nextReportId,
+                'uid_no' => $validated['uid_no'],
+                'ulr_no' => $validated['ulr_no'] ?? '',
+                'customer_details' => $validated['customer_details'],
+                'agency_name' => $validated['agency_name'],
+                'reference_no' => $validated['reference_no'] ?? '',
+                'material_details' => $validated['material_details'],
+                'source_location' => $validated['source_location'] ?? '',
+                'work_order_no' => $validated['work_order_no'] ?? '',
+                'sample_date' => $validated['sample_date'],
+                'sample_tested_date' => $validated['sample_tested_date'],
+                'dispatch_date' => $validated['dispatch_date'] ?? '',
+                'sampled_by' => $validated['sampled_by'] ?? '',
+                'environment_condition' => $validated['environment_condition'] ?? '',
+                'report_type' => $type,
+                'status' => 'Pending',
+                'user_id' => $userId,
+                'updated_by' => $userId,
+                'updated_date' => now(),
+                'create_date' => now(),
+                'cancel_remark' => '',
+            ]);
+
+            // Create a default detail row in the type-specific table
+            $detailModel = $config['model'];
+            $pk = $config['pk'];
+            $nextDetailId = ((int) ($detailModel::query()->max($pk) ?? 0)) + 1;
+
+            $detailData = [
+                $pk => $nextDetailId,
+                'iReportId' => $report->iReportId,
+                'uid_no' => $validated['uid_no'],
+            ];
+
+            // Add common default fields if they exist on the model
+            if (in_array($config['table'], ['concretecore_report', 'concretebeam_report'])) {
+                $detailData['create_date'] = now();
+            }
+
+            $detailModel::query()->create($detailData);
+
+            // Advance workflow
+            $this->bridge->advanceToStage(
+                $validated['uid_no'],
+                'sample-received',
+                $request->user(),
+                ucfirst($config['label']) . " report #{$nextReportId} created — sample received"
+            );
+
+            return $report->iReportId;
+        });
+
+        UserActivity::query()->create([
+            'user_id' => $userId,
+            'action' => 'report_created',
+            'module' => 'reports',
+            'details' => "Created {$config['label']} report for {$validated['uid_no']}",
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => "{$config['label']} report created",
+            'iReportId' => $reportId,
+        ], 201);
+    }
+
+    public function destroy(Request $request, string $type, int $reportId): JsonResponse
+    {
+        abort_if(!isset(self::REPORT_TYPES[$type]), 404, "Unknown report type: $type");
+
+        $report = Report::query()->where('iReportId', $reportId)->where('report_type', $type)->firstOrFail();
+        $config = self::REPORT_TYPES[$type];
+
+        DB::transaction(function () use ($report, $config, $reportId): void {
+            // Delete type-specific detail rows
+            $config['model']::query()->where('iReportId', $reportId)->delete();
+            // Delete the main report
+            $report->delete();
+        });
+
+        UserActivity::query()->create([
+            'user_id' => $request->user()->id,
+            'action' => 'report_deleted',
+            'module' => 'reports',
+            'details' => "Deleted {$config['label']} report #{$reportId} ({$report->uid_no})",
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
+
+        return response()->json(['message' => "{$config['label']} report deleted"]);
     }
 }

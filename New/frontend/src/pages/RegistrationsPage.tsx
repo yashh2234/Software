@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { Search, UserPlus, UserCog, History, Download, Calendar, X } from 'lucide-react'
+import { Search, UserPlus, UserCog, History, Download, Calendar, X, Folder } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { api, request } from '../lib/api'
 import { DataTable } from '../components/DataTable'
 import { RegistrationWizard } from '../components/RegistrationWizard'
 import { Timeline } from '../components/Timeline'
+import { WorkflowStatusBadge } from '../components/WorkflowStatusBadge'
+import { UIDDocumentDrawer } from '../components/UIDDocumentDrawer'
 import type { Registration, RegistrationFormData } from '../lib/types'
 
-function normalizeDate(value: string | null) {
+function normalizeDate(value: string | null | undefined) {
   if (!value) return ''
   if (value.includes('-')) return value
   const parts = value.split('/')
@@ -41,6 +43,7 @@ export function RegistrationsPage() {
   const [formVisible, setFormVisible] = useState(false)
   const [, setLocalError] = useState('')
   const [timelineData, setTimelineData] = useState<Array<{ event: string; timestamp: string | null; icon: string; user?: string }>>([])
+  const [drawerUid, setDrawerUid] = useState<string>('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [activeFilter, setActiveFilter] = useState(false)
@@ -217,6 +220,7 @@ export function RegistrationsPage() {
         <DataTable
           columns={[
             { key: 'uid', label: 'UID' },
+            { key: 'workflow', label: 'Workflow' },
             { key: 'date', label: 'Date' },
             { key: 'agency', label: 'Agency' },
             { key: 'address', label: 'Address' },
@@ -231,6 +235,7 @@ export function RegistrationsPage() {
           ]}
           rows={filtered.map((registration) => ({
             uid: <span className="uid-cell">{registration.uid_no}</span>,
+            workflow: <WorkflowStatusBadge uidNo={registration.uid_no} compact />,
             date: <span className="mono">{normalizeDate(registration.received_date)}</span>,
             agency: registration.agency_name,
             address: <span className="text-muted">{registration.reporting_address}</span>,
@@ -244,6 +249,9 @@ export function RegistrationsPage() {
               ? <span className="badge badge-warning">Pending</span>
               : <span className="badge badge-success">Complete</span>,
             actions: <div className="row-actions-inline">
+              <button className="icon-btn" onClick={() => setDrawerUid(registration.uid_no)} type="button" title="Document Repository & Photos">
+                <Folder size={15} />
+              </button>
               <button className="icon-btn" onClick={() => void showHistory(registration)} type="button" title="History">
                 <History size={15} />
               </button>
@@ -277,6 +285,12 @@ export function RegistrationsPage() {
       {timelineData.length > 0 && (
         <Timeline entries={timelineData} onClose={() => { setTimelineData([]) }} />
       )}
+
+      <UIDDocumentDrawer
+        uidNo={drawerUid}
+        isOpen={Boolean(drawerUid)}
+        onClose={() => setDrawerUid('')}
+      />
     </>
   )
 }

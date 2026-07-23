@@ -70,4 +70,39 @@ class FinalReportsController extends Controller
 
         return response()->json(['message' => 'Report deleted']);
     }
+
+    public function export(Request $request): JsonResponse
+    {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        $statusFilter = $request->query('status');
+        $typeFilter = $request->query('type');
+
+        $reports = Report::query()
+            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate): void {
+                $query->whereDate('create_date', '>=', $startDate)
+                    ->whereDate('create_date', '<=', $endDate);
+            })
+            ->when($statusFilter, fn ($q, $s) => $q->where('status', $s))
+            ->when($typeFilter, fn ($q, $t) => $q->where('report_type', $t))
+            ->orderByDesc('create_date')
+            ->orderByDesc('iReportId')
+            ->limit(5000)
+            ->get()
+            ->map(fn (Report $report): array => [
+                'iReportId' => $report->iReportId,
+                'uid_no' => $report->uid_no,
+                'create_date' => optional($report->create_date)->format('d M Y'),
+                'agency_name' => $report->agency_name,
+                'report_type' => $report->report_type,
+                'report_type_label' => self::REPORT_TYPE_LABELS[$report->report_type] ?? $report->report_type,
+                'status' => $report->status,
+                'material_details' => $report->material_details,
+                'reference_no' => $report->reference_no,
+                'customer_details' => $report->customer_details,
+                'source_location' => $report->source_location,
+            ]);
+
+        return response()->json(['data' => $reports]);
+    }
 }

@@ -51,17 +51,19 @@ class TrackingController extends Controller
             ]);
 
         $todayActiveUsers = UserActivity::query()
+            ->where('action', '!=', 'page_visit')
             ->whereDate('created_at', today())
             ->distinct('user_id')
             ->count('user_id');
 
         $todayActivities = UserActivity::query()
+            ->where('action', '!=', 'page_visit')
             ->whereDate('created_at', today())
             ->count();
 
         $userActivityToday = User::query()
-            ->whereHas('activities', fn ($q) => $q->whereDate('created_at', today()))
-            ->withCount(['activities as today_actions' => fn ($q) => $q->whereDate('created_at', today())])
+            ->whereHas('activities', fn ($q) => $q->where('action', '!=', 'page_visit')->whereDate('created_at', today()))
+            ->withCount(['activities as today_actions' => fn ($q) => $q->where('action', '!=', 'page_visit')->whereDate('created_at', today())])
             ->limit(10)
             ->get(['id', 'firstname', 'lastname', 'username'])
             ->map(fn (User $u): array => [
@@ -97,6 +99,7 @@ class TrackingController extends Controller
 
         $activities = UserActivity::query()
             ->where('user_id', $id)
+            ->where('action', '!=', 'page_visit')
             ->orderByDesc('created_at')
             ->limit(50)
             ->get()
@@ -112,7 +115,7 @@ class TrackingController extends Controller
 
         $user = User::query()->find($id, ['id', 'firstname', 'lastname', 'username', 'last_activity_at', 'is_active', 'is_admin']);
 
-        $totalToday = UserActivity::query()->where('user_id', $id)->whereDate('created_at', today())->count();
+        $totalToday = UserActivity::query()->where('user_id', $id)->where('action', '!=', 'page_visit')->whereDate('created_at', today())->count();
         $lastSeen = $user?->last_activity_at;
 
         return response()->json([

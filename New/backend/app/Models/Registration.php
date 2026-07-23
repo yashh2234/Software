@@ -31,9 +31,7 @@ class Registration extends Model
         'assign_to',
     ];
 
-    protected $casts = [
-        'received_date' => 'date',
-    ];
+    protected $casts = [];
 
     public function client(): BelongsTo
     {
@@ -42,6 +40,6 @@ class Registration extends Model
 
     public function job(): BelongsTo
     {
-        return $this->belongsTo(\App\Jobs::class, 'job_id');
+        return $this->belongsTo(Jobs::class, 'job_id');
     }
 }

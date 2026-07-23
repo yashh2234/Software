@@ -46,42 +46,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setStatus('Syncing')
     try {
-      const [me, summary, rolePayload, userPayload, registrationPayload, billingPayload, sessionPayload] =
-        await Promise.all([
-          api.me(),
-          api.dashboardSummary(),
-          api.roles(),
-          api.users(),
-          api.registrations(),
-          api.billingDue(),
-          api.sessions(),
-        ])
+      const results = await Promise.allSettled([
+        api.me(),
+        api.dashboardSummary(),
+        api.roles(),
+        api.users(),
+        api.registrations(),
+        api.billingDue(),
+        api.sessions(),
+      ])
 
-      setUser(me.user)
-      setDashboard(summary)
-      setRoles(rolePayload.data ?? [])
-      setUsers(userPayload.data ?? [])
-      setRegistrations(registrationPayload.data ?? [])
-      setBillingDue(billingPayload.data ?? [])
-      setSessions(sessionPayload.data ?? [])
+      const [meRes, summaryRes, roleRes, userRes, registrationRes, billingRes, sessionRes] = results
+
+      if (meRes.status === 'fulfilled') {
+        setUser(meRes.value.user)
+      } else {
+        const err = String(meRes.reason ?? '')
+        if (err.toLowerCase().includes('unauthenticated') || err.toLowerCase().includes('401')) {
+          setToken(null)
+          setTokenState(null)
+          setUser(null)
+          setLoading(false)
+          return
+        }
+      }
+
+      if (summaryRes.status === 'fulfilled') setDashboard(summaryRes.value)
+      if (roleRes.status === 'fulfilled') setRoles(roleRes.value.data ?? [])
+      if (userRes.status === 'fulfilled') setUsers(userRes.value.data ?? [])
+      if (registrationRes.status === 'fulfilled') setRegistrations(registrationRes.value.data ?? [])
+      if (billingRes.status === 'fulfilled') setBillingDue(billingRes.value.data ?? [])
+      if (sessionRes.status === 'fulfilled') setSessions(sessionRes.value.data ?? [])
+
       setStatus('Synced')
       setError('')
     } catch (workspaceError) {
       const message = workspaceError instanceof Error ? workspaceError.message : 'Unable to load workspace'
       setError(message)
       setStatus('Workspace error')
-      if (message.toLowerCase().includes('unauthenticated') || message.toLowerCase().includes('unauthorized')) {
-        setToken(null)
-        setTokenState(null)
-        setUser(null)
-        setDashboard(null)
-        setRoles([])
-        setUsers([])
-        setRegistrations([])
-        setBillingDue([])
-        setSessions([])
-        setStatus('Signed out')
-      }
     } finally {
       setLoading(false)
     }

@@ -12,9 +12,6 @@ class InterlockingtilesReport extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'iTilesId', 'iReportId', 'uid_no', 'thickness', 'size_of_tiles',
-        'date_of_casting', 'date_of_testing', 'age_of_specimen',
-        'load_1', 'load_2', 'load_3', 'comp_strength_1', 'comp_strength_2',
-        'comp_strength_3', 'avg_comp_strength', 'create_date', 'set_count',
+        'iTilesId', 'iReportId', 'uid_no', 'location', 'size', 'date_of_testing', 'age_of_specimen', 'crushing_load_1', 'crushing_load_2', 'crushing_load_3', 'crushing_load_4', 'crushing_load_5', 'crushing_load_6', 'crushing_load_7', 'crushing_load_8', 'currected_comp_strength_1', 'currected_comp_strength_2', 'currected_comp_strength_3', 'currected_comp_strength_4', 'currected_comp_strength_5', 'currected_comp_strength_6', 'currected_comp_strength_7', 'currected_comp_strength_8', 'avg_comp_strength', 'is_code_comp_strength'
     ];
 }

@@ -15,7 +15,6 @@ import { InvoicePage } from './pages/InvoicePage'
 import { DueReportsPage } from './pages/DueReportsPage'
 import { FinalReportsPage } from './pages/FinalReportsPage'
 import { UlrLinkPage } from './pages/UlrLinkPage'
-import { StoresPage } from './pages/StoresPage'
 import { WorkflowTemplatesPage } from './pages/WorkflowTemplatesPage'
 import { JobsPage } from './pages/JobsPage'
 import { PermissionsPage } from './pages/PermissionsPage'
@@ -25,12 +24,11 @@ import { AnalyticsPage } from './pages/AnalyticsPage'
 import InquiriesPage from './pages/InquiriesPage'
 import QuotationsPage from './pages/QuotationsPage'
 import WorkOrdersPage from './pages/WorkOrdersPage'
-import DispatchPage from './pages/DispatchPage'
 import OutsourcePage from './pages/OutsourcePage'
 import { AppShell } from './components/AppShell'
 import { useState } from 'react'
 import type { ModuleKey } from './lib/types'
-import { Briefcase, ClipboardList, FlaskConical, BarChart3, CreditCard, Building2, ShieldCheck, Users, ReceiptText, Receipt, IndianRupee, FileText, Settings, ClipboardCheck, type LucideIcon } from 'lucide-react'
+import { Briefcase, ClipboardList, FlaskConical, Users, ReceiptText, IndianRupee, Settings, ClipboardCheck, type LucideIcon } from 'lucide-react'
 
 interface NavItem {
   key: string
@@ -48,13 +46,6 @@ function AuthenticatedApp() {
 
   const groups: NavGroup[] = [
     {
-      label: 'UID Jobs',
-      icon: Briefcase,
-      items: [
-        { key: 'jobs', label: 'UID Register' },
-      ],
-    },
-    {
       label: 'Users',
       icon: Users,
       items: [
@@ -63,7 +54,7 @@ function AuthenticatedApp() {
     },
     {
       label: 'Groups',
-      icon: ShieldCheck,
+      icon: Users,
       items: [
         { key: 'roles', label: 'Manage Groups' },
         { key: 'permissions', label: 'Permissions' },
@@ -81,22 +72,20 @@ function AuthenticatedApp() {
       icon: FlaskConical,
       items: [
         { key: 'reports', label: 'All Lab Reports' },
-        { key: 'lab', label: 'Testing' },
-        { key: 'outsource', label: 'Outsource' },
       ],
     },
     {
       label: 'Manage ULR',
       icon: ClipboardList,
       items: [
-        { key: 'ulr_links', label: 'ULR Links' },
+        { key: 'ulr_links', label: 'Manage ULR Register' },
       ],
     },
     {
       label: 'Final Reports',
       icon: ClipboardCheck,
       items: [
-        { key: 'final_reports', label: 'All Final Reports' },
+        { key: 'final_reports', label: 'Final Reports' },
       ],
     },
     {
@@ -104,48 +93,55 @@ function AuthenticatedApp() {
       icon: ReceiptText,
       items: [
         { key: 'billing', label: 'All Bills' },
-        { key: 'due_reports', label: 'UID w/o Report' },
+      ],
+    },
+    {
+      label: 'Uid w/o Report',
+      icon: ClipboardList,
+      items: [
+        { key: 'due_reports', label: 'Uid w/o Report' },
       ],
     },
     {
       label: 'Daily Expenses',
       icon: IndianRupee,
       items: [
-        { key: 'expenses', label: 'Manage Expenses' },
+        { key: 'expenses', label: 'Daily Expenses' },
       ],
     },
     {
       label: 'Purchase Order',
-      icon: FileText,
+      icon: IndianRupee,
       items: [
-        { key: 'purchase_orders', label: 'Manage PO' },
+        { key: 'purchase_orders', label: 'Purchase Order' },
       ],
     },
     {
       label: 'Invoice',
-      icon: Receipt,
+      icon: ReceiptText,
       items: [
-        { key: 'invoices', label: 'Manage Invoice' },
+        { key: 'invoices', label: 'Invoice' },
       ],
     },
     {
       label: 'Company',
-      icon: Building2,
+      icon: Settings,
       items: [
         { key: 'settings', label: 'Company Settings' },
       ],
     },
     {
-      label: 'Setting',
-      icon: Settings,
+      label: 'Workflow & System',
+      icon: Briefcase,
       items: [
-        { key: 'stores', label: 'Stores' },
-        { key: 'documents', label: 'Documents' },
-        { key: 'dispatches', label: 'Dispatch' },
-        { key: 'workflow_templates', label: 'Workflows' },
-        { key: 'analytics', label: 'Analytics' },
-        { key: 'audit', label: 'Audit Log' },
+        { key: 'jobs', label: 'UID Register' },
+        { key: 'inquiries', label: 'Inquiries' },
+        { key: 'quotations', label: 'Quotations' },
+        { key: 'work_orders', label: 'Work Orders' },
+        { key: 'lab', label: 'Testing' },
+        { key: 'outsource', label: 'Outsource' },
         { key: 'user_tracking', label: 'User Tracking' },
+        { key: 'documents', label: 'Documents' },
       ],
     },
   ]
@@ -186,8 +182,8 @@ function AuthenticatedApp() {
       <div className={`view ${activeModule === 'lab' ? 'visible' : ''}`}>
         {activeModule === 'lab' && <LabPage />}
       </div>
-      <div className={`view ${activeModule === 'reports' ? 'visible' : ''}`}>
-        {activeModule === 'reports' && <ReportsPage />}
+      <div className={`view ${activeModule.startsWith('report') ? 'visible' : ''}`}>
+        {activeModule.startsWith('report') && <ReportsPage defaultType={activeModule.startsWith('report_') ? activeModule.replace('report_', '') : undefined} />}
       </div>
       <div className={`view ${activeModule === 'expenses' ? 'visible' : ''}`}>
         {activeModule === 'expenses' && <ExpensesPage />}
@@ -201,17 +197,11 @@ function AuthenticatedApp() {
       <div className={`view ${activeModule === 'final_reports' ? 'visible' : ''}`}>
         {activeModule === 'final_reports' && <FinalReportsPage />}
       </div>
-      <div className={`view ${activeModule === 'dispatches' ? 'visible' : ''}`}>
-        {activeModule === 'dispatches' && <DispatchPage />}
-      </div>
       <div className={`view ${activeModule === 'outsource' ? 'visible' : ''}`}>
         {activeModule === 'outsource' && <OutsourcePage />}
       </div>
       <div className={`view ${activeModule === 'ulr_links' ? 'visible' : ''}`}>
         {activeModule === 'ulr_links' && <UlrLinkPage />}
-      </div>
-      <div className={`view ${activeModule === 'stores' ? 'visible' : ''}`}>
-        {activeModule === 'stores' && <StoresPage />}
       </div>
       <div className={`view ${activeModule === 'analytics' ? 'visible' : ''}`}>
         {activeModule === 'analytics' && <AnalyticsPage />}

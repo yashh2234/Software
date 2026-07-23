@@ -18,12 +18,7 @@ class WorkOrder extends Model
         'status', 'assignment_type', 'due_date', 'notes', 'created_by',
     ];
 
-    protected $casts = [
-        'total_amount' => 'decimal:2',
-        'advance_payment' => 'decimal:2',
-        'balance_dues' => 'decimal:2',
-        'due_date' => 'date',
-    ];
+    protected $casts = [];
 
     public function inquiry(): BelongsTo
     {

@@ -19,7 +19,10 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5173')],
+    'allowed_origins' => [
+        'http://localhost:5173',
+        'https://conductor-baked-produce.ngrok-free.dev',
+    ],
 
     'allowed_origins_patterns' => [],
 

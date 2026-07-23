@@ -39,6 +39,24 @@ class UlrLinkController extends Controller
         return response()->json(['data' => $links]);
     }
 
+    public function dropdown(Request $request): JsonResponse
+    {
+        $date = $request->query('date', date('Y-m-d'));
+        
+        $links = UlrLink::query()
+            ->whereDate('date', $date)
+            ->get()
+            ->map(function ($ulr) {
+                return [
+                    'ulr_no' => $ulr->ulr_no,
+                    'is_assigned' => !empty($ulr->uid_no),
+                    'label' => $ulr->ulr_no . (!empty($ulr->uid_no) ? ' (Assign)' : ''),
+                ];
+            });
+
+        return response()->json(['data' => $links]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -115,5 +133,33 @@ class UlrLinkController extends Controller
         $uidNo = $request->input('uid_no');
         $reg = Registration::where('uid_no', $uidNo)->first();
         return response()->json(['data' => $reg]);
+    }
+
+    public function register(Request $request): JsonResponse
+    {
+        $query = UlrLink::query()
+            ->leftJoin('client_registration', 'ulr_link.uid_no', '=', 'client_registration.uid_no')
+            ->select(
+                'ulr_link.*',
+                'client_registration.agency_name',
+                'client_registration.reporting_address',
+                'client_registration.mobile_no',
+                'client_registration.name_of_work',
+                'client_registration.sample_details as reg_sample_details',
+                'client_registration.total_payment',
+                'client_registration.advance_payment',
+                'client_registration.balance_dues'
+            );
+
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+        if ($startDate && $endDate) {
+            $query->whereDate('ulr_link.date', '>=', $startDate)
+                ->whereDate('ulr_link.date', '<=', $endDate);
+        }
+
+        $links = $query->orderByDesc('ulr_link.id')->limit(500)->get();
+
+        return response()->json(['data' => $links]);
     }
 }

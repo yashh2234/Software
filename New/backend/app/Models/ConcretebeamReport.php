@@ -12,9 +12,6 @@ class ConcretebeamReport extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'iBeamId', 'iReportId', 'uid_no', 'size_l', 'size_b', 'size_d',
-        'span_length', 'date_of_casting', 'date_of_testing', 'age_of_specimen',
-        'fracture_value', 'observe_load', 'formula', 'flexural_strength',
-        'avg_flexural_strength', 'create_date', 'set_count',
+        'iBeamId', 'iReportId', 'uid_no', 'size_l', 'size_b', 'size_d', 'span_length', 'date_of_casting', 'date_of_testing', 'age_of_specimen', 'fracture_value', 'observe_load', 'formula', 'flexural_strength', 'avg_flexural_strength', 'create_date', 'set_count'
     ];
 }

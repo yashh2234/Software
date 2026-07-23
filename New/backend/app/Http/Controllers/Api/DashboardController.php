@@ -115,27 +115,75 @@ class DashboardController extends Controller
             ->where('mode_of_payment', 'Cash')
             ->sum('total_payment');
 
+        // Full 18-category expense breakdown for current month
+        $firstDayOfMonth = now()->startOfMonth()->toDateString();
+        $lastDayOfMonth = now()->endOfMonth()->toDateString();
+
+        $categories = [
+            'Site Exp', 'Corier and Speed Post', 'Convence and Transportation',
+            'Survey Exp', 'DD and tendor Exp', 'Omendra Gupta Current ac',
+            'Office Maintenance', 'Refreshment', 'stationary',
+            'Machine and Car Repairing', 'Lab Testing Exp', 'Audit Expenses',
+            'Telephone/Water/Electricity Exp', 'Printor and Computer Repairing exp',
+            'Printing Exp', 'Cash advance', 'Salary', 'Other Exp',
+        ];
+
+        $expenseBreakdown = [];
+        foreach ($categories as $category) {
+            $total = DB::table('daily_expenses')
+                ->whereBetween('date', [$firstDayOfMonth, $lastDayOfMonth])
+                ->where('expenses_category', $category)
+                ->sum(DB::raw('CAST(total_expenses AS DECIMAL(12,2))'));
+            $expenseBreakdown[$category] = (float) $total;
+        }
+
         return response()->json([
             'today_cash_total' => (float) $todayCash,
             'today_received_total' => (float) $todayReceived,
             'month_cash_total' => (float) $monthCash,
+            'expense_breakdown' => $expenseBreakdown,
         ]);
     }
 
     public function trends(Request $request): JsonResponse
     {
-        $months = (int) ($request->query('months', 12));
+        $period = $request->query('period', 'monthly'); // daily, monthly, quarterly, yearly, custom
+        $fromDate = $request->query('from_date');
+        $toDate = $request->query('to_date');
 
-        $monthlyRegistrations = DB::table('client_registration')
+        $query = DB::table('client_registration');
+
+        if ($period === 'custom' && $fromDate && $toDate) {
+            $query->whereBetween('received_date', [$fromDate, $toDate]);
+        } elseif ($period === 'daily') {
+            $query->whereRaw("received_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
+        } elseif ($period === 'quarterly') {
+            $query->whereRaw("received_date >= DATE_SUB(CURDATE(), INTERVAL 2 YEAR)");
+        } elseif ($period === 'yearly') {
+            $query->whereRaw("received_date >= DATE_SUB(CURDATE(), INTERVAL 5 YEAR)");
+        } else {
+            $query->whereRaw("received_date >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)");
+        }
+
+        if ($period === 'daily') {
+            $dateFormat = "DATE_FORMAT(received_date, '%Y-%m-%d')";
+        } elseif ($period === 'quarterly') {
+            $dateFormat = "CONCAT(YEAR(received_date), '-Q', QUARTER(received_date))";
+        } elseif ($period === 'yearly') {
+            $dateFormat = "DATE_FORMAT(received_date, '%Y')";
+        } else {
+            $dateFormat = "DATE_FORMAT(received_date, '%Y-%m')";
+        }
+
+        $registrations = $query
             ->select(
-                DB::raw("DATE_FORMAT(received_date, '%Y-%m') as month"),
+                DB::raw("{$dateFormat} as month"),
                 DB::raw('COUNT(*) as total'),
                 DB::raw('SUM(CAST(total_payment AS DECIMAL(12,2))) as total_amount'),
                 DB::raw('SUM(CAST(advance_payment AS DECIMAL(12,2))) as received_amount'),
                 DB::raw('SUM(CAST(balance_dues AS DECIMAL(12,2))) as balance_amount'),
             )
-            ->whereRaw("received_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)", [$months])
-            ->groupBy('month')
+            ->groupBy(DB::raw($dateFormat))
             ->orderBy('month')
             ->get();
 
@@ -164,7 +212,7 @@ class DashboardController extends Controller
             ->toArray();
 
         return response()->json([
-            'monthly_registrations' => $monthlyRegistrations,
+            'monthly_registrations' => $registrations,
             'report_statuses' => [
                 'total' => array_sum($reportStatusCounts),
                 'pending' => (int) ($reportStatusCounts['Pending'] ?? 0),
@@ -175,4 +223,45 @@ class DashboardController extends Controller
             'month_expenses' => $monthExpenses,
         ]);
     }
+
+    public function yearlyReport(Request $request): JsonResponse
+    {
+        $selectedYear = (int) ($request->query('year', now()->year));
+
+        // Monthly revenue totals for the selected year
+        $monthlyData = [];
+        for ($month = 1; $month <= 12; $month++) {
+            $total = DB::table('client_registration')
+                ->whereYear('received_date', $selectedYear)
+                ->whereMonth('received_date', $month)
+                ->sum(DB::raw('CAST(total_payment AS DECIMAL(12,2))'));
+            $monthlyData[] = [
+                'month' => $month,
+                'month_name' => date('F', mktime(0, 0, 0, $month, 1)),
+                'total_amount' => (float) $total,
+            ];
+        }
+
+        // Available years for the year selector
+        $availableYears = DB::table('client_registration')
+            ->selectRaw('DISTINCT YEAR(received_date) as year')
+            ->whereNotNull('received_date')
+            ->where('received_date', '!=', '')
+            ->where('received_date', '!=', '0000-00-00')
+            ->orderByDesc('year')
+            ->pluck('year')
+            ->filter()
+            ->values()
+            ->toArray();
+
+        $yearTotal = array_sum(array_column($monthlyData, 'total_amount'));
+
+        return response()->json([
+            'selected_year' => $selectedYear,
+            'available_years' => $availableYears,
+            'monthly_data' => $monthlyData,
+            'year_total' => $yearTotal,
+        ]);
+    }
 }
+

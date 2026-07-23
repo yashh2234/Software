@@ -109,6 +109,46 @@ class DocumentController extends Controller
         );
     }
 
+    /** Upload several documents in one multipart request. */
+    public function bulkStore(Request $request)
+    {
+        $request->validate([
+            'files' => 'required|array|min:1|max:20',
+            'files.*' => 'required|file|max:51200|mimetypes:application/pdf,image/jpeg,image/png,image/tiff,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'category_id' => 'nullable|integer|exists:document_categories,id',
+            'linked_job_id' => 'nullable|integer|exists:jobs,id',
+        ]);
+
+        $created = [];
+        foreach ($request->file('files', []) as $file) {
+            $storedPath = $file->store('documents/' . date('Y/m'), 'public');
+            $document = Document::create([
+                'category_id' => $request->input('category_id'),
+                'title' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $storedPath,
+                'file_type' => $file->getMimeType(),
+                'file_extension' => $file->getClientOriginalExtension(),
+                'file_size' => $file->getSize(),
+                'linked_job_id' => $request->input('linked_job_id'),
+                'created_by' => $request->user()?->id,
+            ]);
+            DocumentVersion::create([
+                'document_id' => $document->id,
+                'version_number' => 1,
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $storedPath,
+                'file_type' => $file->getMimeType(),
+                'file_size' => $file->getSize(),
+                'change_notes' => 'Initial upload',
+                'created_by' => $request->user()?->id,
+            ]);
+            $created[] = $document;
+        }
+
+        return response()->json(['data' => $created], 201);
+    }
+
     public function update(Request $request, Document $document)
     {
         $validated = $request->validate([

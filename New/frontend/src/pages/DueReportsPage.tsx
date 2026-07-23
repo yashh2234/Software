@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AlertTriangle, Download } from 'lucide-react'
 import { api } from '../lib/api'
+import { WorkflowStatusBadge } from '../components/WorkflowStatusBadge'
 
 interface DueReport {
   iClientId: number
@@ -103,6 +104,7 @@ export function DueReportsPage() {
             <thead>
               <tr>
                 <th>UID No</th>
+                <th>Workflow</th>
                 <th>Date</th>
                 <th>Agency</th>
                 <th>Mobile</th>
@@ -119,6 +121,7 @@ export function DueReportsPage() {
                 return (
                   <tr key={r.iClientId}>
                     <td><strong>{r.uid_no}</strong></td>
+                    <td><WorkflowStatusBadge uidNo={r.uid_no} compact /></td>
                     <td>{r.received_date ?? '-'}</td>
                     <td>{r.agency_name ?? '-'}</td>
                     <td>{r.mobile_no ?? '-'}</td>

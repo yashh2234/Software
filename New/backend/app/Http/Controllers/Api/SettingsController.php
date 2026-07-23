@@ -31,6 +31,9 @@ class SettingsController extends Controller
             'account_name' => ['nullable', 'string', 'max:255'],
             'currency' => ['nullable', 'string', 'max:10'],
             'message' => ['nullable', 'string'],
+            'service_charge_value' => ['nullable', 'string'],
+            'vat_charge_value' => ['nullable', 'string'],
+            'country' => ['nullable', 'string', 'max:255'],
         ]);
 
         $company = Company::query()->first();

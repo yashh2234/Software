@@ -13,11 +13,7 @@ class QuotationItem extends Model
         'quotation_id', 'description', 'quantity', 'unit', 'rate', 'amount', 'sort_order',
     ];
 
-    protected $casts = [
-        'quantity' => 'decimal:2',
-        'rate' => 'decimal:2',
-        'amount' => 'decimal:2',
-    ];
+    protected $casts = [];
 
     public function quotation(): BelongsTo
     {

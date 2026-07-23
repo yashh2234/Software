@@ -19,12 +19,6 @@ class Billing extends Model
     ];
 
     protected $casts = [
-        'bill_amount' => 'decimal:2',
-        'advance_amount' => 'decimal:2',
-        'amount_received' => 'decimal:2',
-        'due_amount' => 'decimal:2',
-        'discount' => 'decimal:2',
-        'amount_received_date' => 'date',
         'created_date' => 'datetime',
     ];
 }

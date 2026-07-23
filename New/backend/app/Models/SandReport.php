@@ -12,8 +12,6 @@ class SandReport extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'iSandId', 'iReportId', 'uid_no', 'source_location', 'type_of_sand',
-        'silt_content', 'avg_silt_content', 'bulking_of_sand', 'specific_gravity',
-        'fineness_modules', 'water_absorption', 'create_date', 'set_count',
+        'iSandId', 'iReportId', 'uid_no', 'is_sieve_size', 'weight_retained_in_gm', 'weight_retained_in_perc', 'cum_weight_retained_in_perc', 'passing', 'is_grading_as_per_is', 'remarks', 'create_date', 'set_count'
     ];
 }

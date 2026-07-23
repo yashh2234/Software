@@ -18,9 +18,6 @@ class SmsReminderLog extends Model
 
     protected $casts = [
         'sent_date' => 'datetime',
-        'balance_amount' => 'decimal:2',
-        'advance_amount' => 'decimal:2',
-        'total_amount' => 'decimal:2',
     ];
 
     public function client()

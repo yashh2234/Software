@@ -82,12 +82,19 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/registrations', [RegistrationController::class, 'index']);
     Route::post('/registrations', [RegistrationController::class, 'store']);
     Route::put('/registrations/{registrationId}', [RegistrationController::class, 'update']);
+    Route::delete('/registrations/{registrationId}', [RegistrationController::class, 'destroy']);
     Route::get('/registrations/generate-uid', [RegistrationController::class, 'generateUid']);
+    Route::get('/registrations/export', [RegistrationController::class, 'export']);
     Route::post('/registrations/upload-scan', [RegistrationController::class, 'uploadScan']);
     Route::get('/registrations/search-customers', [RegistrationController::class, 'searchCustomers']);
     Route::get('registrations/{registration}/history', [RegistrationController::class, 'history']);
+    Route::post('/registrations/{uidNo}/photos', [RegistrationController::class, 'uploadPhotos']);
         Route::get('/billing', [BillingController::class, 'index']);
         Route::get('/billing/due', [BillingController::class, 'due']);
+        Route::get('/billing/due-attached', [BillingController::class, 'dueAttached']);
+        Route::get('/billing/not-updated', [BillingController::class, 'notUpdated']);
+        Route::get('/billing/payment-not-updated', [BillingController::class, 'notUpdated']);
+        Route::get('/billing/export', [BillingController::class, 'export']);
         Route::get('/billing/sms-log', [BillingController::class, 'smsLog']);
         Route::get('/billing/{id}', [BillingController::class, 'show']);
         Route::post('/billing', [BillingController::class, 'store']);
@@ -99,7 +106,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/reports/types', [ReportController::class, 'types']);
     Route::get('/reports/{type}', [ReportController::class, 'index']);
     Route::get('/reports/{type}/{reportId}', [ReportController::class, 'show']);
+    Route::get('/reports/{type}/{reportId}/versions', [ReportController::class, 'versions']);
     Route::post('/reports/cube', [ReportController::class, 'createCube']);
+    Route::post('/reports/{type}/create', [ReportController::class, 'createReport']);
+    Route::put('/reports/{type}/{reportId}', [ReportController::class, 'update']);
+    Route::delete('/reports/{type}/{reportId}', [ReportController::class, 'destroy']);
     Route::post('/reports/{reportId}/approve', [ReportController::class, 'approve']);
     Route::post('/reports/{reportId}/cancel', [ReportController::class, 'cancel']);
     Route::post('/reports/{reportId}/assign', [ReportController::class, 'assign']);
@@ -115,7 +126,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     Route::get('/expenses', [ExpenseController::class, 'index']);
     Route::post('/expenses', [ExpenseController::class, 'store']);
+    Route::get('/expenses/export', [ExpenseController::class, 'export']);
     Route::get('/expenses/monthly-summary', [ExpenseController::class, 'monthlySummary']);
+    Route::put('/expenses/{id}', [ExpenseController::class, 'update']);
+    Route::delete('/expenses/{id}', [ExpenseController::class, 'destroy']);
 
     Route::apiResource('purchase-orders', PurchaseOrderController::class);
     Route::get('/purchase-orders/{id}/print', [PurchaseOrderController::class, 'printDiv']);
@@ -142,10 +156,13 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('reports/{type}/{id}/print', [ReportController::class, 'printReport']);
     Route::get('due-reports', [DueReportsController::class, 'index']);
     Route::get('final-reports', [FinalReportsController::class, 'index']);
+    Route::get('final-reports/export', [FinalReportsController::class, 'export']);
     Route::delete('final-reports/{id}', [FinalReportsController::class, 'destroy']);
 
+    Route::get('ulr-links/dropdown', [UlrLinkController::class, 'dropdown']);
     Route::apiResource('ulr-links', UlrLinkController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('ulr-links/export', [UlrLinkController::class, 'export']);
+    Route::get('ulr-links/register', [UlrLinkController::class, 'register']);
     Route::post('ulr-links/client-details', [UlrLinkController::class, 'getClientDetails']);
 
     Route::apiResource('stores', StoreController::class)->only(['index', 'store', 'update', 'destroy']);
@@ -153,6 +170,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('reports/{type}/export', [ReportController::class, 'export']);
 
     Route::get('dashboard/cash-summary', [DashboardController::class, 'cashSummary']);
+    Route::get('dashboard/yearly-report', [DashboardController::class, 'yearlyReport']);
 
     Route::prefix('workflow')->middleware('permission:manage_workflows')->group(function (): void {
         Route::post('seed', [WorkflowTemplateController::class, 'seed']);
@@ -227,6 +245,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::prefix('documents')->group(function (): void {
         Route::get('/', [DocumentController::class, 'index']);
         Route::post('/', [DocumentController::class, 'store']);
+        Route::post('bulk', [DocumentController::class, 'bulkStore']);
         Route::get('search', [DocumentController::class, 'search']);
         Route::get('categories/tree', [DocumentCategoryController::class, 'tree']);
         Route::get('categories', [DocumentCategoryController::class, 'index']);

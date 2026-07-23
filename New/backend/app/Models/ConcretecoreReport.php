@@ -12,9 +12,6 @@ class ConcretecoreReport extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'iCoreId', 'iReportId', 'uid_no', 'location', 'depth_of_core',
-        'dia_of_core', 'length_of_core', 'date_of_casting', 'date_of_testing',
-        'age_of_specimen', 'load', 'comp_strength', 'avg_comp_strength',
-        'is_code_comp_strength', 'set_count', 'create_date',
+        'iCoreId', 'iReportId', 'uid_no', 'ht_core_before_facing', 'dimension_core_facing_dia', 'dimension_core_facing_height', 'core_sectional_area', 'correction_factor', 'age_of_specimen', 'crushing_load', 'measured_comp_strength', 'corrected_comp_strength', 'equivalent_cube_strength', 'create_date', 'set_count'
     ];
 }

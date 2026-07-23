@@ -250,17 +250,25 @@ class InvoiceController extends Controller
         return response()->json(['data' => $invoices]);
     }
 
-    public function printInvoice(int $id): JsonResponse
+    public function printInvoice(Request $request, int $id)
     {
         $invoice = Invoice::query()->with('items')->where('iInvoiceId', $id)->firstOrFail();
 
         $company = \App\Models\Company::first();
 
-        return response()->json([
+        $payload = [
             'invoice' => $invoice,
             'company' => $company,
             'amount_in_words' => $this->getIndianCurrency((float) $invoice->net_amount),
-        ]);
+        ];
+
+        if ($request->query('format') === 'pdf') {
+            $html = view('pdf.invoice', $payload)->render();
+            return \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+                ->download('invoice-' . ($invoice->invoice_no ?? $invoice->iInvoiceId) . '.pdf');
+        }
+
+        return response()->json($payload);
     }
 
     private function getIndianCurrency(float $number): string

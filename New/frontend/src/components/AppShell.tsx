@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Bell, FlaskConical, RefreshCcw, LogOut, LayoutDashboard, Users, ClipboardList, ReceiptText, BarChart3, ShieldCheck, IndianRupee, FileText, Settings, History, Search, Check, Receipt, AlertTriangle, ClipboardCheck, Briefcase, Building2, ChevronDown, ChevronRight, Store, Activity, Filter, X } from 'lucide-react'
+import { Bell, FlaskConical, RefreshCcw, LogOut, LayoutDashboard, Users, ClipboardList, ReceiptText, BarChart3, ShieldCheck, IndianRupee, FileText, Settings, History, Search, Check, Receipt, AlertTriangle, ClipboardCheck, Briefcase, Building2, ChevronDown, ChevronRight, Activity, Filter, X } from 'lucide-react'
+import { Button, Chip, Avatar } from '@heroui/react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { api } from '../lib/api'
@@ -21,7 +22,6 @@ const iconMap: Record<string, LucideIcon> = {
   due_reports: AlertTriangle,
   final_reports: ClipboardCheck,
   ulr_links: FileText,
-  stores: Store,
   workflow_templates: Settings,
   jobs: Briefcase,
   permissions: ShieldCheck,
@@ -215,9 +215,14 @@ export function AppShell({ groups, activeModule, onModuleChange, children }: App
           })}
         </nav>
 
-        <div className="user-block">
-          <strong>{user?.name}</strong>
-          <span>{user?.is_admin ? 'Administrator' : 'Staff'}</span>
+        <div className="user-block bg-default-50 border-t border-default-200 p-4 flex items-center gap-3">
+          <Avatar className="w-8 h-8 font-bold text-xs bg-primary/20 text-primary">
+            {user?.name?.charAt(0).toUpperCase() || 'U'}
+          </Avatar>
+          <div className="flex flex-col">
+            <strong className="text-sm">{user?.name}</strong>
+            <span className="text-xs text-default-500">{user?.is_admin ? 'Administrator' : 'Staff'}</span>
+          </div>
         </div>
       </aside>
 
@@ -228,15 +233,21 @@ export function AppShell({ groups, activeModule, onModuleChange, children }: App
             <h1>{activeModule === 'dashboard' ? 'Dashboard' : groups.flatMap((g) => g.items).find((i) => i.key === activeModule)?.label ?? 'Dashboard'}</h1>
           </div>
           <div className="topbar-actions">
-            <div ref={searchRef} style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <div className="search-field" style={{ width: 200 }}>
-                  <Search size={16} />
-                  <input placeholder="Search UID, agency, mobile..." value={searchQuery} onChange={(e) => handleSearchInput(e.target.value)} onFocus={() => { if (searchResults.length > 0) setShowResults(true) }} />
+            <div ref={searchRef} className="relative">
+              <div className="relative flex items-center gap-2">
+                <div className="relative w-64">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-default-400" />
+                  <input
+                    type="text"
+                    placeholder="Search UID, tests, clients..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearchInput(e.target.value)}
+                    className="w-full bg-default-100 hover:bg-default-200 transition-colors rounded-medium pl-9 pr-3 py-1.5 text-sm outline-none focus:bg-default-100 focus:ring-2 focus:ring-primary/50"
+                  />
                 </div>
-                <button className="icon-button" onClick={() => setShowFilters(!showFilters)} type="button" title="Filters" style={{ color: showFilters ? '#195340' : '#65737d' }}>
+                <Button isIconOnly variant={showFilters ? "primary" : "ghost"} size="sm" onClick={() => setShowFilters(!showFilters)}>
                   <Filter size={16} />
-                </button>
+                </Button>
               </div>
 
               {showFilters ? (
@@ -306,9 +317,11 @@ export function AppShell({ groups, activeModule, onModuleChange, children }: App
               ) : null}
             </div>
 
-            <span className="sync-pill">{status}</span>
-            <button className="icon-button" onClick={() => void refresh()} type="button" title="Refresh"><RefreshCcw size={18} /></button>
-            <button className="icon-button" onClick={() => void logout()} type="button" title="Sign out"><LogOut size={18} /></button>
+            <Chip size="sm" color="success" variant="soft" className="font-semibold text-xs">
+              {status}
+            </Chip>
+            <Button isIconOnly size="sm" variant="ghost" onClick={() => void refresh()}><RefreshCcw size={16} /></Button>
+            <Button isIconOnly size="sm" variant="ghost" onClick={() => void logout()}><LogOut size={16} /></Button>
           </div>
         </header>
 

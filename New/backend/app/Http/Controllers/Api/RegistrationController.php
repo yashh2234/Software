@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Jobs as JobsModel;
+use App\Models\Jobs as JobsModel;
 use App\Models\AuditLog;
 use App\Models\Registration;
 use App\Models\Report;
@@ -15,6 +15,7 @@ use App\Services\WorkflowEngine;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 
 class RegistrationController extends Controller
@@ -217,6 +218,40 @@ class RegistrationController extends Controller
 
         $this->syncJobFromRegistration($registration, $request);
 
+        // Automated SMS Dispatch (Legacy parity)
+        $totalPayment = (float) ($validated['total_payment'] ?? 0);
+        $advancePayment = (float) ($validated['advance_payment'] ?? 0);
+        $balanceDues = (float) ($validated['balance_dues'] ?? 0);
+
+        if ($totalPayment > 0 && $advancePayment > 0) {
+            if ($balanceDues > 0) {
+                $message = "Hello {$validated['agency_name']},\nWe have received your payment of Rs{$advancePayment}. Your remaining amount is Rs{$balanceDues}.\nYou may pay by visiting our office.\nThank you\nFrom Namotech";
+            } else {
+                $message = "Hello {$validated['agency_name']},\nWe have received your payment of Rs{$advancePayment}.\nThank you\nFrom Namotech";
+            }
+
+            // Mocked API Key & numbers mimicking legacy logic
+            $apiKey = 'NTI0ODRkNGQ1NjYxMzI0MzRlNzc0ZjM0NmU1NDZhMzc=';
+            $mobileNo = '918114428016,' . $validated['mobile_no'];
+            
+            // Dispatch asynchronously (fire and forget)
+            Http::async()->asForm()->post('https://api.textlocal.in/send/', [
+                'apikey' => $apiKey,
+                'numbers' => $mobileNo,
+                'sender' => 'NAMOTH',
+                'message' => $message
+            ]);
+
+            UserActivity::query()->create([
+                'user_id' => $request->user()->id,
+                'action' => 'sms_sent',
+                'module' => 'registrations',
+                'details' => "Automated payment SMS sent to {$validated['mobile_no']}",
+                'ip_address' => $request->ip(),
+                'created_at' => now(),
+            ]);
+        }
+
         return response()->json([
             'message' => 'Registration created successfully',
             'registration' => $this->presentRegistration($registration),
@@ -322,9 +357,61 @@ class RegistrationController extends Controller
         $this->syncJobFromRegistration($registration, $request);
 
         return response()->json([
-            'message' => 'Registration updated successfully',
-            'registration' => $this->presentRegistration($registration),
+            'message' => 'Registration updated',
+            'data' => DB::table('client_registration')->where('iClientId', $registrationId)->first(),
         ]);
+    }
+
+    public function uploadPhotos(Request $request, string $uidNo): JsonResponse
+    {
+        $request->validate([
+            'photos' => ['required', 'array', 'min:1', 'max:10'],
+            'photos.*' => ['required', 'file', 'image', 'max:10240'],
+        ]);
+
+        $registration = Registration::where('uid_no', $uidNo)->firstOrFail();
+
+        $category = \App\Models\DocumentCategory::firstOrCreate(
+            ['slug' => 'sample-photos'],
+            ['name' => 'Sample Photos', 'slug' => 'sample-photos']
+        );
+
+        $uploaded = [];
+        foreach ($request->file('photos', []) as $file) {
+            $storedPath = $file->store('documents/sample_photos/' . date('Y/m'), 'public');
+            $doc = \App\Models\Document::create([
+                'category_id' => $category->id,
+                'title' => 'Sample Photo - ' . $uidNo,
+                'description' => "Sample photo uploaded for UID {$uidNo}",
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $storedPath,
+                'file_type' => $file->getMimeType(),
+                'file_extension' => $file->getClientOriginalExtension(),
+                'file_size' => $file->getSize(),
+                'tags' => "sample_photo,{$uidNo}",
+                'linked_model_type' => 'Registration',
+                'linked_model_id' => $registration->iClientId,
+                'created_by' => $request->user()?->id,
+            ]);
+
+            \App\Models\DocumentVersion::create([
+                'document_id' => $doc->id,
+                'version_number' => 1,
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $storedPath,
+                'file_type' => $file->getMimeType(),
+                'file_size' => $file->getSize(),
+                'change_notes' => 'Sample photo upload',
+                'created_by' => $request->user()?->id,
+            ]);
+
+            $uploaded[] = $doc;
+        }
+
+        return response()->json([
+            'message' => 'Sample photos uploaded successfully',
+            'data' => $uploaded,
+        ], 201);
     }
 
     private function presentRegistration(object $registration): array
@@ -385,6 +472,69 @@ class RegistrationController extends Controller
             'scan_copy_4' => $registration->scan_copy_4 ?? '',
             'status' => $balanceDues > 0 ? 'Pending' : 'Complete',
         ];
+    }
+
+    public function destroy(Request $request, int $registrationId): JsonResponse
+    {
+        $registration = DB::table('client_registration')->where('iClientId', $registrationId)->first();
+        abort_if(!$registration, 404, 'Registration not found');
+
+        DB::transaction(function () use ($registration, $registrationId): void {
+            // Delete associated reports
+            Report::query()->where('uid_no', $registration->uid_no)->delete();
+
+            // Delete associated billing records
+            DB::table('billing')->where('uid_no', $registration->uid_no)->delete();
+
+            // Delete the registration
+            DB::table('client_registration')->where('iClientId', $registrationId)->delete();
+        });
+
+        UserActivity::query()->create([
+            'user_id' => $request->user()->id,
+            'action' => 'registration_deleted',
+            'module' => 'registrations',
+            'details' => "Deleted registration {$registration->uid_no}",
+            'ip_address' => $request->ip(),
+            'created_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Registration deleted successfully']);
+    }
+
+    public function export(Request $request): JsonResponse
+    {
+        $startDate = $request->query('start_date');
+        $endDate = $request->query('end_date');
+
+        $registrations = Registration::query()
+            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate): void {
+                $query->whereDate('received_date', '>=', $startDate)
+                    ->whereDate('received_date', '<=', $endDate);
+            })
+            ->orderByDesc('iClientId')
+            ->limit(5000)
+            ->get()
+            ->map(function (Registration $r): array {
+                return [
+                    'uid_no' => $r->uid_no,
+                    'received_date' => $this->formatLegacyDate($r->received_date),
+                    'agency_name' => $r->agency_name,
+                    'reporting_address' => $r->reporting_address,
+                    'mobile_no' => $r->mobile_no,
+                    'name_of_work' => $r->name_of_work,
+                    'sample_details' => $r->sample_details,
+                    'total_payment' => (float) ($r->total_payment ?: 0),
+                    'advance_payment' => (float) ($r->advance_payment ?: 0),
+                    'balance_dues' => (float) ($r->balance_dues ?: 0),
+                    'mode_of_payment' => $r->mode_of_payment ?? '',
+                    'gst_no' => $r->gst_no ?? '',
+                    'remark' => $r->remark,
+                    'report_status' => $r->report_status ?? '',
+                ];
+            });
+
+        return response()->json(['data' => $registrations]);
     }
 
     public function searchCustomers(Request $request): JsonResponse
@@ -479,7 +629,7 @@ class RegistrationController extends Controller
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
-            'field' => ['required', 'string', 'in:scan_copy,scan_copy_1,scan_copy_2,scan_copy_3,scan_copy_4'],
+            'field' => ['required', 'string', 'in:scan_copy,scan_copy_1,scan_copy_2,scan_copy_3,scan_copy_4,report_copy'],
             'registration_id' => ['required', 'integer'],
         ]);
 

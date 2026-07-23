@@ -19,14 +19,8 @@ class Quotation extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
-        'valid_until' => 'date',
         'sent_at' => 'datetime',
         'accepted_at' => 'datetime',
-        'total_amount' => 'decimal:2',
-        'discount' => 'decimal:2',
-        'tax_amount' => 'decimal:2',
-        'net_amount' => 'decimal:2',
     ];
 
     public function inquiry(): BelongsTo

@@ -12,8 +12,6 @@ class BitumencoreReport extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'iBitumenCId', 'iReportId', 'uid_no', 'name_of_test', 'thickness',
-        'date_of_sampling', 'mathod_of_test', 'density', 'result',
-        'create_date', 'set_count',
+        'iBitumenCId', 'iReportId', 'uid_no', 'name_of_test', 'thickness', 'date_of_sampling', 'mathod_of_test', 'density', 'result', 'create_date', 'set_count'
     ];
 }

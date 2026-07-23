@@ -17,7 +17,6 @@ class Dispatch extends Model
     ];
 
     protected $casts = [
-        'dispatch_date' => 'date',
         'received_at' => 'datetime',
     ];
 

@@ -18,7 +18,6 @@ class Inquiry extends Model
     ];
 
     protected $casts = [
-        'received_date' => 'date',
         'contacted_at' => 'datetime',
     ];
 

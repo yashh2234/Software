@@ -12,9 +12,6 @@ class BricksReport extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'iBricksId', 'iReportId', 'uid_no', 'dimension_length', 'dimension_width',
-        'dimension_height', 'weight', 'comp_strength', 'avg_comp_strength',
-        'water_absorption', 'avg_water_absorption', 'efflorescence',
-        'create_date', 'set_count',
+        'iBricksId', 'iReportId', 'uid_no', 'dimension_length', 'dimension_width', 'dimension_height', 'water_absorption', 'efflorescence', 'compressive_strength_main', 'length', 'width', 'load', 'compressive_strength', 'avg_compressive_strength', 'limit', 'create_date', 'set_count'
     ];
 }

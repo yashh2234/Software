@@ -6,10 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Jobs;
 use App\Models\Sample;
 use App\Models\JobTimeline;
+use App\Services\WorkflowBridge;
 use Illuminate\Http\Request;
 
 class SampleController extends Controller
 {
+    protected WorkflowBridge $bridge;
+
+    public function __construct(WorkflowBridge $bridge)
+    {
+        $this->bridge = $bridge;
+    }
+
     public function index(Jobs $job)
     {
         return response()->json($job->samples()->latest()->get());
@@ -32,12 +40,23 @@ class SampleController extends Controller
         $validated['job_id'] = $job->id;
         $sample = Sample::create($validated);
 
+        $sampleName = $sample->sample_name ?? $sample->sample_type ?? 'N/A';
+        $sampleQty = "{$sample->quantity}{$sample->unit}";
+
         JobTimeline::create([
             'job_id' => $job->id,
             'action' => 'Sample Registered',
             'user_id' => $request->user()?->id,
-            'notes' => "Sample: {$sample->sample_name ?? $sample->sample_type ?? 'N/A'} ({$sample->quantity}{$sample->unit})",
+            'notes' => "Sample: {$sampleName} ({$sampleQty})",
         ]);
+
+        // Advance workflow job to 'sample-received' stage
+        $this->bridge->advanceToStage(
+            $job->uid_no,
+            'sample-received',
+            $request->user(),
+            "Sample received: {$sampleName}"
+        );
 
         return response()->json($sample, 201);
     }

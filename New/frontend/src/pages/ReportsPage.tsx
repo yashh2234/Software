@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Check, X, FlaskConical, Play, FileText, UserCheck, History, RotateCcw } from 'lucide-react'
+import { Check, X, FlaskConical, Play, FileText, UserCheck, History, RotateCcw, Pencil, Printer } from 'lucide-react'
 import { api } from '../lib/api'
 import { Timeline } from '../components/Timeline'
+import { WorkflowStatusBadge } from '../components/WorkflowStatusBadge'
 import { JobDetailPage } from './JobDetailPage'
+import { ReportEditPage } from './ReportEditPage'
 
 import type { CubeReport } from '../lib/types'
 
@@ -24,9 +26,9 @@ const STATUS_FLOW: Record<string, { label: string; color: string; next: string[]
   Cancel: { label: 'Cancel', color: '#ef4444', next: [] },
 }
 
-export function ReportsPage() {
+export function ReportsPage({ defaultType }: { defaultType?: string }) {
   const [types, setTypes] = useState<ReportTypeInfo[]>([])
-  const [activeType, setActiveType] = useState<string>('')
+  const [activeType, setActiveType] = useState<string>(defaultType || '')
   const [reports, setReports] = useState<CubeReport[]>([])
   const [users, setUsers] = useState<Array<{ id: number; firstname: string; lastname: string }>>([])
   const [loading, setLoading] = useState(true)
@@ -38,18 +40,33 @@ export function ReportsPage() {
   const [timelineReportId, setTimelineReportId] = useState<number | null>(null)
   const [timelineData, setTimelineData] = useState<Array<{ event: string; timestamp: string | null; icon: string; user?: string }>>([])
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null)
+  const [editingReportId, setEditingReportId] = useState<number | null>(null)
+
+  const handlePrint = async (reportId: number) => {
+    try {
+      await api.downloadReportPdf(activeType, reportId)
+    } catch {
+      setLocalError('Failed to print report')
+    }
+  }
 
   const loadTypes = useCallback(async () => {
     try {
       const data = await api.reportTypes()
       setTypes(data.data)
-      if (data.data.length > 0 && !activeType) {
+      if (data.data.length > 0 && !activeType && !defaultType) {
         setActiveType(data.data[0].key)
       }
     } catch {
-      setLocalError('Unable to load report types')
+      setLocalError('Failed to load types')
     }
-  }, [activeType])
+  }, [activeType, defaultType])
+
+  useEffect(() => {
+    if (defaultType && defaultType !== activeType) {
+      setActiveType(defaultType)
+    }
+  }, [defaultType])
 
   const loadReports = useCallback(async () => {
     if (!activeType) return
@@ -204,11 +221,25 @@ export function ReportsPage() {
       )
     }
 
+    // Print and Edit are available for most reports
+    actions.push(
+      <button key="print" className="icon-button" onClick={() => void handlePrint(report.iReportId)} type="button" title="Print report">
+        <Printer size={17} />
+      </button>,
+      <button key="edit" className="icon-button" onClick={() => setEditingReportId(report.iReportId)} type="button" title="Edit report">
+        <Pencil size={17} />
+      </button>,
+    )
+
     return actions
   }
 
   if (selectedJobId) {
     return <JobDetailPage jobId={selectedJobId} onBack={() => setSelectedJobId(null)} />
+  }
+
+  if (editingReportId) {
+    return <ReportEditPage type={activeType} reportId={editingReportId} onBack={() => { setEditingReportId(null); void loadReports() }} />
   }
 
   return (
@@ -329,6 +360,7 @@ export function ReportsPage() {
                 <article className="report-row" key={report.iReportId}>
                   <div>
                     <strong>{report.uid_no}</strong>
+                    <WorkflowStatusBadge uidNo={report.uid_no} compact />
                     <span>{report.agency_name}</span>
                     <small>{(report as any).job_id ? <span className="link" onClick={() => setSelectedJobId((report as any).job_id)} style={{ cursor: 'pointer', textDecoration: 'underline' }}>Job #{ (report as any).job_id}</span> : ''}{report.material_details ? ` | ${report.material_details}` : ''}{report.create_date ? ` | ${report.create_date}` : ''}</small>
                   </div>

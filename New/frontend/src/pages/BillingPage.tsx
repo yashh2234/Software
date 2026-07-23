@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { DollarSign, Clock, MessageSquare, Send, Plus, Pencil, Trash2, X } from 'lucide-react'
 import { api } from '../lib/api'
 import { DataTable } from '../components/DataTable'
+import { WorkflowStatusBadge } from '../components/WorkflowStatusBadge'
 import type { BillingItem, BillingRecord, SmsLogEntry } from '../lib/types'
 
-type Tab = 'all' | 'due' | 'sms'
+type Tab = 'all' | 'due' | 'due_attached' | 'not_updated' | 'sms'
 
 function money(value: number) {
   return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(value)
@@ -87,6 +88,24 @@ export function BillingPage() {
     }
   }, [])
 
+  const loadDueAttached = useCallback(async () => {
+    try {
+      const data = await api.billingDueAttached()
+      setDueItems(data.data ?? [])
+    } catch {
+      setLocalError('Unable to load due attached reports')
+    }
+  }, [])
+
+  const loadNotUpdated = useCallback(async () => {
+    try {
+      const data = await api.billingNotUpdated()
+      setDueItems(data.data ?? [])
+    } catch {
+      setLocalError('Unable to load not updated bills')
+    }
+  }, [])
+
   const loadSmsLog = useCallback(async () => {
     try {
       const data = await api.smsLog()
@@ -111,6 +130,8 @@ export function BillingPage() {
 
   useEffect(() => { if (tab === 'all') void loadBillings() }, [tab, loadBillings])
   useEffect(() => { if (tab === 'due') void loadDue() }, [tab, loadDue])
+  useEffect(() => { if (tab === 'due_attached') void loadDueAttached() }, [tab, loadDueAttached])
+  useEffect(() => { if (tab === 'not_updated') void loadNotUpdated() }, [tab, loadNotUpdated])
   useEffect(() => { if (tab === 'sms') void loadSmsLog() }, [tab, loadSmsLog])
 
   const beginCreateBilling = () => {
@@ -253,8 +274,10 @@ export function BillingPage() {
   }
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'all', label: 'All Billing', icon: <DollarSign size={16} /> },
-    { key: 'due', label: 'Due Payments', icon: <Clock size={16} /> },
+    { key: 'all', label: 'All Bills', icon: <DollarSign size={16} /> },
+    { key: 'due', label: 'Due Bills', icon: <Clock size={16} /> },
+    { key: 'due_attached', label: 'Due Bills Attached Report', icon: <Clock size={16} /> },
+    { key: 'not_updated', label: 'Not Update Bills', icon: <Clock size={16} /> },
     { key: 'sms', label: 'SMS Log', icon: <MessageSquare size={16} /> },
   ]
 
@@ -310,6 +333,7 @@ export function BillingPage() {
               columns={[
                 { key: 'created_date', label: 'Date' },
                 { key: 'uid_no', label: 'UID' },
+                { key: 'workflow', label: 'Workflow' },
                 { key: 'agency_name', label: 'Agency' },
                 { key: 'mobile_no', label: 'Mobile' },
                 { key: 'bill_no', label: 'Bill No' },
@@ -322,6 +346,7 @@ export function BillingPage() {
               rows={billings.map((rec) => ({
                 created_date: rec.created_date ?? '-',
                 uid_no: rec.uid_no,
+                workflow: <WorkflowStatusBadge uidNo={rec.uid_no} compact />,
                 agency_name: rec.agency_name ?? '-',
                 mobile_no: rec.mobile_no ?? '-',
                 bill_no: rec.bill_no,
@@ -373,6 +398,7 @@ export function BillingPage() {
             <DataTable
               columns={[
                 { key: 'uid_no', label: 'UID' },
+                { key: 'workflow', label: 'Workflow' },
                 { key: 'agency_name', label: 'Agency' },
                 { key: 'mobile_no', label: 'Mobile' },
                 { key: 'total_payment', label: 'Total' },
@@ -383,6 +409,7 @@ export function BillingPage() {
               ]}
               rows={dueItems.map((item) => ({
                 uid_no: item.uid_no,
+                workflow: <WorkflowStatusBadge uidNo={item.uid_no} compact />,
                 agency_name: (
                   <span style={{
                     color: item.color === 'red' ? '#d32f2f' : item.color === 'yellow' ? '#f9a825' : '#2e7d32',

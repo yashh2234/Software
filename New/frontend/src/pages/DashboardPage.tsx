@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ClipboardList, Check, UserCheck, FileText, AlertTriangle, Briefcase, Eye, ThumbsUp, CreditCard, Truck, Plus, FileEdit } from 'lucide-react'
+import { ClipboardList, UserCheck, AlertTriangle, Briefcase, Eye, ThumbsUp, CreditCard, Truck, Sparkles } from 'lucide-react'
 import { useAuth } from '../lib/auth'
 import { MetricCard } from '../components/MetricCard'
-import { RegistrationTrendChart, MonthlyRevenueChart, ReportStatusChart, ExpenseCategoryChart } from '../components/Charts'
+import { DashboardAnalyticsWidget } from '../components/DashboardAnalyticsWidget'
 import { api, request } from '../lib/api'
 import { useTracking } from '../lib/useTracking'
 
@@ -38,26 +38,46 @@ function detectRole(permissions: string[], groups: Array<{ id: number; group_nam
 }
 
 export function DashboardPage() {
-  const { user, dashboard, sessions } = useAuth()
+  const { user, dashboard } = useAuth()
   useTracking('dashboard')
+
+  // Period / Date range state for Analytics
+  const [period, setPeriod] = useState<string>('monthly')
+  const [fromDate, setFromDate] = useState<string>(() => {
+    const d = new Date()
+    d.setDate(1)
+    return d.toISOString().substring(0, 10)
+  })
+  const [toDate, setToDate] = useState<string>(() => new Date().toISOString().substring(0, 10))
+
   const [trends, setTrends] = useState<TrendsData | null>(null)
-  const [trendsLoading, setTrendsLoading] = useState(true)
   const [assignedCount, setAssignedCount] = useState(0)
   const [monthExpenses, setMonthExpenses] = useState<Array<{ category: string; total: number }>>([])
+  const [trackingSummary, setTrackingSummary] = useState<any>(null)
+  const [recentActivities, setRecentActivities] = useState<any[]>([])
 
   const role = detectRole(user?.permissions ?? [], user?.groups ?? [])
   const metrics = dashboard?.metrics ?? {}
 
-  const loadTrends = useCallback(async () => {
-    setTrendsLoading(true)
+  const loadTrends = useCallback(async (p: string, fDate?: string, tDate?: string) => {
     try {
-      const data = await request<TrendsData>('/dashboard/trends')
+      const params = new URLSearchParams()
+      params.set('period', p)
+      if (p === 'custom' && fDate && tDate) {
+        params.set('from_date', fDate)
+        params.set('to_date', tDate)
+      }
+      const data = await request<TrendsData>(`/dashboard/trends?${params.toString()}`)
       setTrends(data)
-    } catch {
-    } finally {
-      setTrendsLoading(false)
-    }
+    } catch {}
   }, [])
+
+  const handlePeriodChange = (newPeriod: string, fDate?: string, tDate?: string) => {
+    setPeriod(newPeriod)
+    if (fDate) setFromDate(fDate)
+    if (tDate) setToDate(tDate)
+    void loadTrends(newPeriod, fDate || fromDate, tDate || toDate)
+  }
 
   const loadAssigned = useCallback(async () => {
     try {
@@ -73,13 +93,23 @@ export function DashboardPage() {
     } catch {}
   }, [])
 
+  const loadTracking = useCallback(async () => {
+    try {
+      const summaryData = await api.trackSummary()
+      setTrackingSummary(summaryData)
+      const actData = await api.userActivity()
+      setRecentActivities((actData.activities || []).filter((a: any) => a.action !== 'page_visit'))
+    } catch {}
+  }, [])
+
   useEffect(() => {
-    void loadTrends()
+    void loadTrends(period, fromDate, toDate)
     void loadAssigned()
     void loadExpenses()
-  }, [loadTrends, loadAssigned, loadExpenses])
+    void loadTracking()
+  }, [period, fromDate, toDate, loadTrends, loadAssigned, loadExpenses, loadTracking])
 
-  // Job-based metric cards (always visible)
+  // Job-based metric cards
   const jobMetrics = [
     {
       label: 'Jobs Today',
@@ -98,66 +128,67 @@ export function DashboardPage() {
       value: metrics.jobs_pending_review ?? 0,
       detail: 'Waiting for technical review',
       icon: Eye,
-      accent: true,
     },
     {
       label: 'Pending Approval',
       value: metrics.jobs_pending_approval ?? 0,
       detail: 'Waiting for final approval',
       icon: ThumbsUp,
-      accent: true,
     },
     {
       label: 'Pending Billing',
       value: metrics.jobs_pending_billing ?? 0,
       detail: 'Awaiting invoice generation',
       icon: CreditCard,
-      accent: true,
     },
     {
       label: 'Pending Dispatch',
       value: metrics.jobs_pending_dispatch ?? 0,
       detail: 'Awaiting dispatch',
       icon: Truck,
-      accent: true,
     },
     {
-      label: 'Overdue',
+      label: 'Overdue SLA',
       value: metrics.jobs_overdue ?? 0,
       detail: 'SLA breached',
       icon: AlertTriangle,
-      danger: true,
     },
   ]
 
-  // My Tasks (role-based)
+  // My Tasks card
   const myTasksCard = () => {
     const myPending = metrics.my_pending_jobs ?? 0
     const myReviews = metrics.my_pending_reviews ?? 0
     const total = myPending + myReviews
 
-    if (total === 0) return null
+    if (total === 0 && assignedCount === 0) return null
 
     return (
-      <section className="surface" style={{ marginBottom: '1.25rem' }}>
-        <div className="surface-heading">
+      <section className="surface p-5 rounded-xl border border-default-200 bg-content1 shadow-sm mb-6">
+        <div className="surface-heading flex items-center justify-between mb-4">
           <div>
-            <p className="section-label">My Tasks</p>
-            <h2>Assigned to me</h2>
+            <p className="text-xs font-semibold text-primary uppercase tracking-wider">My Tasks</p>
+            <h2 className="text-lg font-bold text-default-900">Assigned Work Items</h2>
           </div>
-          <UserCheck size={20} />
+          <UserCheck size={20} className="text-primary" />
         </div>
-        <div style={{ display: 'flex', gap: 16, padding: '0 20px 20px' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {myPending > 0 ? (
-            <div style={{ flex: 1, padding: 16, background: '#edf6f4', borderRadius: 8, textAlign: 'center' }}>
-              <strong style={{ fontSize: '1.5rem', color: '#195340' }}>{myPending}</strong>
-              <p style={{ fontSize: '0.82rem', color: '#327268', margin: '4px 0 0' }}>Pending Jobs</p>
+            <div className="p-4 rounded-lg bg-primary-50/60 border border-primary-200 text-center">
+              <strong className="text-2xl font-bold text-primary-700">{myPending}</strong>
+              <p className="text-xs text-primary-800 font-medium mt-1">Pending Jobs</p>
             </div>
           ) : null}
           {myReviews > 0 ? (
-            <div style={{ flex: 1, padding: 16, background: '#fef3c7', borderRadius: 8, textAlign: 'center' }}>
-              <strong style={{ fontSize: '1.5rem', color: '#92400e' }}>{myReviews}</strong>
-              <p style={{ fontSize: '0.82rem', color: '#92400e', margin: '4px 0 0' }}>Pending Reviews</p>
+            <div className="p-4 rounded-lg bg-warning-50/60 border border-warning-200 text-center">
+              <strong className="text-2xl font-bold text-warning-700">{myReviews}</strong>
+              <p className="text-xs text-warning-800 font-medium mt-1">Pending Reviews</p>
+            </div>
+          ) : null}
+          {assignedCount > 0 ? (
+            <div className="p-4 rounded-lg bg-success-50/60 border border-success-200 text-center">
+              <strong className="text-2xl font-bold text-success-700">{assignedCount}</strong>
+              <p className="text-xs text-success-800 font-medium mt-1">Assigned Testing Samples</p>
             </div>
           ) : null}
         </div>
@@ -166,156 +197,56 @@ export function DashboardPage() {
   }
 
   return (
-    <>
-      {/* Quick Actions */}
-      <section className="surface" style={{ marginBottom: '1.25rem' }}>
-        <div className="surface-heading">
-          <div>
-            <p className="section-label">Quick actions</p>
-            <h2>Jump to</h2>
+    <div className="space-y-6 pb-12">
+      {/* Welcome & Command Header */}
+      <section className="surface p-6 rounded-xl border border-default-200 bg-gradient-to-r from-default-100 to-content1 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles size={16} className="text-primary" />
+            <span className="text-xs font-semibold text-primary uppercase tracking-wider">Laboratory Command Center</span>
           </div>
+          <h1 className="text-2xl font-extrabold text-default-900">
+            Welcome back, {user?.name || 'User'}!
+          </h1>
+          <p className="text-xs text-default-500 mt-1">
+            Role: <span className="font-semibold text-default-700 uppercase">{role}</span> | Operations, test workflows & real-time analytics.
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: 8, padding: '0 20px 16px', flexWrap: 'wrap' }}>
-          <button className="ghost-button" onClick={() => window.location.href = '/#jobs'} type="button">
-            <Plus size={16} /> New Job
-          </button>
-          <button className="ghost-button" onClick={() => window.location.href = '/#registrations'} type="button">
-            <FileEdit size={16} /> Continue Draft
-          </button>
-          <button className="ghost-button" onClick={() => window.location.href = '/#reports'} type="button">
-            <Eye size={16} /> View Reviews
-          </button>
-          <button className="ghost-button" onClick={() => window.location.href = '/#inquiries'} type="button">
-            <ClipboardList size={16} /> New Inquiry
-          </button>
-          <button className="ghost-button" onClick={() => window.location.href = '/#billing'} type="button">
-            <CreditCard size={16} /> Pending Billing
-          </button>
-          <button className="ghost-button" onClick={() => window.location.href = '/#dispatches'} type="button">
-            <Truck size={16} /> Pending Dispatch
-          </button>
+
+        {/* Quick summary tags */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="px-3 py-1.5 rounded-lg bg-content1 border border-default-200 text-xs">
+            <span className="text-default-500">Today Registrations: </span>
+            <strong className="text-default-900">{metrics.today_registration ?? 0}</strong>
+          </div>
+          <div className="px-3 py-1.5 rounded-lg bg-content1 border border-default-200 text-xs">
+            <span className="text-default-500">Today Revenue: </span>
+            <strong className="text-success font-bold">₹{money(metrics.today_balance_amount ?? 0)}</strong>
+          </div>
         </div>
       </section>
 
-      {/* My Tasks section */}
+      {/* My Tasks Section */}
       {myTasksCard()}
 
-      {/* Job-based metrics strip */}
-      <section className="metric-strip">
+      {/* KPI Job Metrics Strip */}
+      <section className="metric-strip grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
         {jobMetrics.map((m) => (
           <MetricCard key={m.label} label={m.label} value={m.value} detail={m.detail} icon={m.icon} />
         ))}
       </section>
 
-      {/* Legacy metrics for reception */}
-      {(role === 'admin' || role === 'reception') ? (
-        <>
-          <div className="two-column" style={{ marginTop: '1.25rem' }}>
-            <section className="surface">
-              <div className="surface-heading">
-                <div>
-                  <p className="section-label">Module map</p>
-                  <h2>System modules</h2>
-                </div>
-              </div>
-              <div className="module-grid">
-                {(dashboard?.modules ?? []).map((moduleName) => (
-                  <div className="module-item" key={moduleName}>
-                    <Check size={18} />
-                    <span>{moduleName}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {trends && !trendsLoading ? (
-              <section className="surface">
-                <ReportStatusChart data={trends.report_statuses} />
-              </section>
-            ) : null}
-          </div>
-
-          {trends && !trendsLoading && trends.monthly_registrations.length > 0 ? (
-            <div className="two-column" style={{ marginTop: '1.25rem' }}>
-              <section className="surface">
-                <RegistrationTrendChart data={trends.monthly_registrations} />
-              </section>
-              <section className="surface">
-                <MonthlyRevenueChart data={trends.monthly_registrations} />
-              </section>
-            </div>
-          ) : null}
-
-          {monthExpenses.length > 0 ? (
-            <section className="surface" style={{ marginTop: '1.25rem' }}>
-              <ExpenseCategoryChart data={monthExpenses} />
-            </section>
-          ) : null}
-
-          {/* Legacy summary */}
-          <div className="two-column" style={{ marginTop: '1.25rem' }}>
-            <section className="surface">
-              <div className="surface-heading">
-                <div>
-                  <p className="section-label">Today</p>
-                  <h2>Work summary</h2>
-                </div>
-              </div>
-              <div className="summary-list">
-                <span>{metrics.today_registration ?? 0} registrations received</span>
-                <span>{metrics.today_reports ?? 0} reports created</span>
-                <span>{money(metrics.today_balance_amount ?? 0)} balance raised</span>
-              </div>
-            </section>
-          </div>
-        </>
-      ) : null}
-
-      {/* Lab tech view */}
-      {role === 'lab_tech' && assignedCount > 0 ? (
-        <section className="surface" style={{ marginTop: '1.25rem' }}>
-          <div className="surface-heading">
-            <div>
-              <p className="section-label">My work</p>
-              <h2>Assigned samples</h2>
-            </div>
-            <FileText size={20} />
-          </div>
-          <p className="summary-list">
-            <span>You have {assignedCount} sample{assignedCount !== 1 ? 's' : ''} assigned for testing.</span>
-          </p>
-        </section>
-      ) : null}
-
-      {/* Session info for admin */}
-      {role === 'admin' ? (
-        <section className="surface" style={{ marginTop: '1.25rem' }}>
-          <div className="surface-heading">
-            <div>
-              <p className="section-label">Security</p>
-              <h2>Recent sessions</h2>
-            </div>
-          </div>
-          <div className="session-stack">
-            {sessions.length === 0 ? (
-              <p className="empty-state">No session history available.</p>
-            ) : (
-              sessions.slice(0, 5).map((session) => (
-                <article className="session-row" key={session.id}>
-                  <div>
-                    <strong>{session.ip_address ?? 'Unknown IP'}</strong>
-                    <span>{session.logged_in_at ?? '-'}</span>
-                    <small>{session.last_seen_at ?? session.logged_out_at ?? 'Active now'}</small>
-                  </div>
-                  <span className={`status-tag ${session.active ? 'complete' : 'cancel'}`}>
-                    {session.active ? 'Active' : 'Closed'}
-                  </span>
-                </article>
-              ))
-            )}
-          </div>
-        </section>
-      ) : null}
-    </>
+      {/* Dashboard Analytics & User Operational Activity with Timeframe Selector */}
+      <DashboardAnalyticsWidget
+        trends={trends}
+        monthExpenses={monthExpenses}
+        trackingSummary={trackingSummary}
+        recentActivities={recentActivities}
+        period={period}
+        fromDate={fromDate}
+        toDate={toDate}
+        onPeriodChange={handlePeriodChange}
+      />
+    </div>
   )
 }

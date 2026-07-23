@@ -12,9 +12,6 @@ class MesReport extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'iMesId', 'iReportId', 'uid_no', 'mould_size', 'location',
-        'date_of_casting', 'date_of_testing', 'age_of_specimen',
-        'weight', 'avg_comp_strength_1', 'avg_comp_strength_2',
-        'avg_comp_strength_3', 'create_date', 'set_count',
+        'iMesId', 'iReportId', 'uid_no', 'impact_value', 'los_angles_abrasion_value', 'crushing_value', 'soundness', 'presence_of_deleterious', 'organic_impurities', 'specific_gravity', 'is_sieve_size', 'weight_retained', 'weight_retained_in', 'cum_weight_retained_in', 'passing', 'is_grading_as_per_is_table', 'remarks', 'set_count', 'create_date'
     ];
 }

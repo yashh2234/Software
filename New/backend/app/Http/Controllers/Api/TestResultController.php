@@ -39,11 +39,12 @@ class TestResultController extends Controller
 
         $result = TestResult::create($validated);
 
+        $testNameOrId = $result->test_name ?? $result->test_id;
         JobTimeline::create([
             'job_id' => $job->id,
             'action' => 'Test Result Recorded',
             'user_id' => $request->user()?->id,
-            'notes' => "Test: {$result->test_name ?? $result->test_id} = {$result->result_value}",
+            'notes' => "Test: {$testNameOrId} = {$result->result_value}",
         ]);
 
         return response()->json($result->load(['test', 'category', 'tester']), 201);

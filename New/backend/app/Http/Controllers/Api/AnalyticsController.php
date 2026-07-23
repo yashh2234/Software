@@ -13,6 +13,7 @@ use App\Models\Billing;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AnalyticsController extends Controller
 {
@@ -61,7 +62,7 @@ class AnalyticsController extends Controller
         )
             ->whereNotNull('received_date')
             ->where('received_date', '!=', '')
-            ->groupBy('month')
+            ->groupByRaw("DATE_FORMAT(STR_TO_DATE(received_date, '%d-%m-%Y'), '%Y-%m')")
             ->orderBy('month')
             ->get();
 
@@ -121,10 +122,11 @@ class AnalyticsController extends Controller
         }
 
         // By month
+        $reportDateColumn = $this->reportDateColumn();
         $monthlyTests = Report::selectRaw(
-            "report_type, DATE_FORMAT(create_date, '%Y-%m') as month, COUNT(*) as total"
+            "report_type, DATE_FORMAT({$reportDateColumn}, '%Y-%m') as month, COUNT(*) as total"
         )
-            ->whereNotNull('create_date')
+            ->whereNotNull($reportDateColumn)
             ->groupBy('report_type', 'month')
             ->orderBy('month')
             ->get()
@@ -141,16 +143,17 @@ class AnalyticsController extends Controller
     protected function turnaroundAnalytics(int $year, int $months): array
     {
         $start = now()->subMonths($months);
+        $reportDateColumn = $this->reportDateColumn();
 
         $averages = DB::table('reports')
             ->selectRaw(
                 "report_type,
-                 AVG(TIMESTAMPDIFF(HOUR, create_date, COALESCE(report_generated_at, approved_at, updated_at))) as avg_hours,
-                 MIN(TIMESTAMPDIFF(HOUR, create_date, COALESCE(report_generated_at, approved_at, updated_at))) as min_hours,
-                 MAX(TIMESTAMPDIFF(HOUR, create_date, COALESCE(report_generated_at, approved_at, updated_at))) as max_hours,
+                 AVG(TIMESTAMPDIFF(HOUR, {$reportDateColumn}, COALESCE(report_generated_at, approved_at, updated_at))) as avg_hours,
+                 MIN(TIMESTAMPDIFF(HOUR, {$reportDateColumn}, COALESCE(report_generated_at, approved_at, updated_at))) as min_hours,
+                 MAX(TIMESTAMPDIFF(HOUR, {$reportDateColumn}, COALESCE(report_generated_at, approved_at, updated_at))) as max_hours,
                  COUNT(*) as count"
             )
-            ->whereNotNull('create_date')
+            ->whereNotNull($reportDateColumn)
             ->whereIn('status', ['Complete', 'Approved', 'Report Generated', 'Dispatched'])
             ->groupBy('report_type')
             ->get();
@@ -226,7 +229,7 @@ class AnalyticsController extends Controller
             ]);
 
         $oldReports = Report::selectRaw(
-            'uid_no, report_type, status, create_date, DATEDIFF(NOW(), create_date) as days_pending'
+            "uid_no, report_type, status, {$this->reportDateColumn()} as report_date, DATEDIFF(NOW(), {$this->reportDateColumn()}) as days_pending"
         )
             ->whereIn('status', ['Pending', 'Testing'])
             ->whereNotNull('create_date')
@@ -239,6 +242,11 @@ class AnalyticsController extends Controller
             'overdue_stages' => $overdueTrackings,
             'long_pending_reports' => $oldReports,
         ];
+    }
+
+    private function reportDateColumn(): string
+    {
+        return Schema::hasColumn('reports', 'create_date') ? 'create_date' : 'created_at';
     }
 
     /**

@@ -110,7 +110,7 @@ export function ExpenseCategoryChart({ data }: ExpenseChartProps) {
         <p style={{ textAlign: 'center', color: '#65737d', padding: '2rem 0', fontSize: '0.85rem' }}>No expenses this month</p>
       ) : (
         <Suspense fallback={<div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#65737d' }}>Loading chart...</div>}>
-          <LazyBarChart data={chartData} color={COLORS.secondary} dataKey="amount" />
+          <LazyBarChart data={chartData} color={COLORS.secondary} dataKey="amount" labelKey="category" />
         </Suspense>
       )}
     </div>

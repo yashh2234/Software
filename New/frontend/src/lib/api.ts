@@ -131,6 +131,14 @@ export const api = {
     return request('/billing/due')
   },
 
+  billingDueAttached(): Promise<{ data: BillingItem[] }> {
+    return request('/billing/due-attached')
+  },
+
+  billingNotUpdated(): Promise<{ data: BillingItem[] }> {
+    return request('/billing/not-updated')
+  },
+
   billingList(params?: Record<string, string>): Promise<{ data: BillingRecord[] }> {
     const qs = params ? '?' + new URLSearchParams(params).toString() : ''
     return request(`/billing${qs}`)
@@ -174,6 +182,23 @@ export const api = {
 
   reportDetail(type: string, reportId: number): Promise<{ report: unknown; details: unknown[] }> {
     return request(`/reports/${type}/${reportId}`)
+  },
+
+  updateReport(type: string, reportId: number, data: any): Promise<{ message: string; report: any }> {
+    return request(`/reports/${type}/${reportId}`, { method: 'PUT', body: JSON.stringify(data) })
+  },
+
+  async downloadReportPdf(type: string, reportId: number): Promise<void> {
+    const token = getToken()
+    const response = await fetch(`${BASE_URL}/reports/${type}/${reportId}/print?format=pdf`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    if (!response.ok) throw new Error('Print failed')
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    window.open(url, '_blank')
   },
 
   createCubeReport(data: Record<string, unknown>): Promise<{ message: string }> {
@@ -427,6 +452,19 @@ export const api = {
       },
       body: formData,
     }).then(r => r.json())
+  },
+
+  jobs(params?: Record<string, string>): Promise<{ data: Array<{ id: number; uid_no: string; title: string; status: string; current_stage: { name: string; slug: string; color: string } | null; assigned_to: number | null; created_at: string }> }> {
+    const qs = params ? '?' + new URLSearchParams(params).toString() : ''
+    return request(`/jobs${qs}`)
+  },
+
+  jobByUid(uidNo: string): Promise<{ data: Array<{ id: number; uid_no: string; status: string; current_stage: { name: string; slug: string; color: string } | null }> }> {
+    return request(`/jobs?search=${encodeURIComponent(uidNo)}&per_page=1`)
+  },
+
+  jobTimeline(jobId: number): Promise<{ data: Array<{ id: number; action: string; from_stage: { name: string } | null; to_stage: { name: string } | null; user: { name: string } | null; notes: string | null; created_at: string }> }> {
+    return request(`/jobs/${jobId}/timeline`)
   },
 }
 

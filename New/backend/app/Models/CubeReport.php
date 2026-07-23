@@ -14,29 +14,10 @@ class CubeReport extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'iCubeId',
-        'iReportId',
-        'uid_no',
-        'location',
-        'size_of_cube',
-        'date_of_casting',
-        'date_of_testing',
-        'age_of_specimen',
-        'avg_comp_strength',
-        'is_code_comp_strength',
-        'load_1',
-        'load_2',
-        'load_3',
-        'comp_strength_1',
-        'comp_strength_2',
-        'comp_strength_3',
-        'set_count',
-        'create_date',
+        'iCubeId', 'iReportId', 'uid_no', 'location', 'size_of_cube', 'date_of_casting', 'date_of_testing', 'age_of_specimen', 'avg_comp_strength', 'is_code_comp_strength', 'load_1', 'load_2', 'load_3', 'comp_strength_1', 'comp_strength_2', 'comp_strength_3', 'set_count', 'create_date'
     ];
 
     protected $casts = [
-        'date_of_casting' => 'date',
-        'date_of_testing' => 'date',
         'create_date' => 'datetime',
     ];
 }
